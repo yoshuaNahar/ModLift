@@ -8,17 +8,21 @@ const int E = 6;  // For displaying segment "E"
 const int F = 8;  // For displaying segment "F"
 const int G = 9;  // For displaying segment "G"
 
-const int BUTTON_PIN = 12;
+const int BUTTON_PIN = 11;
 int buttonState = 0;
 
-const int LED_PIN = 13;
+const int DOOR_LED_PIN = 10;
 
-int liftIndex = -1;
+const int IR_OBSTACLE_PIN = 13;
+int noObstacle = true;
+
+int liftPosition = -1;
 int openDoor = 0;
 
 void setup() {
-  Serial.begin(9600); // for testing
+  Serial.begin(9600);
 
+  // For communication
   Wire.begin(1);
   Wire.onReceive(getLiftPosition);
   Wire.onRequest(sendEvent);
@@ -32,9 +36,14 @@ void setup() {
   pinMode(F, OUTPUT);
   pinMode(G, OUTPUT);
 
+  // For get lift. NOTE: only 1 of the 2 buttons for up or down
   pinMode(BUTTON_PIN, INPUT);
 
-  pinMode(LED_PIN, OUTPUT);
+  // For LED goes on when door open
+  pinMode(DOOR_LED_PIN, OUTPUT);
+  
+  // For IR obstacle module (lift position near)
+  pinMode(noObstacle, INPUT);
 }
 
 void loop() {
@@ -51,20 +60,22 @@ void loop() {
   }
   
   if (openDoor) {
-    digitalWrite(LED_PIN, HIGH); 
+    digitalWrite(DOOR_LED_PIN, HIGH); 
   } else {
-    digitalWrite(LED_PIN, LOW); 
+    digitalWrite(DOOR_LED_PIN, LOW); 
   }
+  
+  checkLiftDetectedByIr();
 }
 
 // Executes whenever data is received from master
 // this function is registered as an event
 void getLiftPosition(int howMany) {
-  liftIndex = Wire.read();           // receive bit for lift as an integer
+  liftPosition = Wire.read();           // receive bit for lift as an integer
   openDoor = Wire.read();            // receive bit for floor door
-  Serial.println(liftIndex);             // print the integer testing
+  Serial.println(liftPosition);             // print the integer testing
   Serial.println(openDoor);
-  displayController(liftIndex);          // show lift current location
+  displayController(liftPosition);          // show lift current location
 }
 
 // Send that I pressed the request lift button
@@ -78,6 +89,16 @@ void displayController(int x) {
   if (x >= 0 && x <= 9) {
     turnOff();
     displayDigit(x); 
+  }
+}
+
+void checkLiftDetectedByIr() {
+ noObstacle = digitalRead(IR_OBSTACLE_PIN);
+  if (noObstacle) {
+    // TODO: ADD THE CODE TO OPEN DOOR HERE
+    Serial.println("clear"); // remove after testing
+  } else {
+    Serial.println("OBSTACLE!!, OBSTACLE!!"); // remove after testing
   }
 }
 
