@@ -8,8 +8,9 @@ const int E = 6;  // For displaying segment "E"
 const int F = 8;  // For displaying segment "F"
 const int G = 9;  // For displaying segment "G"
 
-const int BUTTON_PIN = 11;
-int buttonState = 0;
+const int BUTTON_UP_PIN = 11;
+int buttonStateUp = 0;
+int buttonStateDown = 0;
 
 const int DOOR_LED_PIN = 10;
 
@@ -18,6 +19,8 @@ int noObstacle = true;
 
 int liftPosition = -1;
 int openDoor = 0;
+
+boolean resetButtons = false;
 
 void setup() {
   Serial.begin(9600);
@@ -37,7 +40,7 @@ void setup() {
   pinMode(G, OUTPUT);
 
   // For get lift. NOTE: only 1 of the 2 buttons for up or down
-  pinMode(BUTTON_PIN, INPUT);
+  pinMode(BUTTON_UP_PIN, INPUT);
 
   // For LED goes on when door open
   pinMode(DOOR_LED_PIN, OUTPUT);
@@ -51,13 +54,15 @@ void loop() {
   delay(1000);
 //  turnOff();
 
-  buttonState = digitalRead(BUTTON_PIN);
-
-  if (buttonState) {
-    Serial.println("Button pressed");
-  } else {
-    Serial.println("Button not pressed!");
+  if (buttonStateUp == 0) {
+    buttonStateUp = digitalRead(BUTTON_UP_PIN);
   }
+  
+//  if (buttonStateUp) {
+//    Serial.println("Button pressed");
+//  } else {
+//    Serial.println("Button not pressed!");
+//  }
   
   if (openDoor) {
     digitalWrite(DOOR_LED_PIN, HIGH); 
@@ -66,13 +71,20 @@ void loop() {
   }
   
   checkLiftDetectedByIr();
+  
+  // The lift remains on buttonsState pressed until master gives a reset
+  if (resetButtons) {
+    buttonStateUp = 0;
+    resetButtons = false;
+  }
 }
 
 // Executes whenever data is received from master
 // this function is registered as an event
 void getLiftPosition(int howMany) {
   liftPosition = Wire.read();           // receive bit for lift as an integer
-  openDoor = Wire.read();            // receive bit for floor door
+  openDoor = Wire.read();  // receive bit for floor door
+  resetButtons = Wire.read(); // 
   Serial.println(liftPosition);             // print the integer testing
   Serial.println(openDoor);
   displayController(liftPosition);          // show lift current location
@@ -80,9 +92,10 @@ void getLiftPosition(int howMany) {
 
 // Send that I pressed the request lift button
 void sendEvent() {
-  Serial.println("hello ");
-  Serial.println(buttonState);
-  Wire.write(buttonState);
+  Serial.println(buttonStateUp);
+  Serial.println(buttonStateDown);
+  byte buttonStates[] = { buttonStateUp, buttonStateDown };
+  Wire.write(buttonStates, 2);
 }
 
 void displayController(int x) {
