@@ -8,9 +8,12 @@ const int E = 6;  // For displaying segment "E"
 const int F = 8;  // For displaying segment "F"
 const int G = 9;  // For displaying segment "G"
 
+// i2c gives back byte and arduino can turn it to an int 0/1
+// but also into boolean, so why are we using int instead of boolean everywhere? - yoshua
+
 const int BUTTON_UP_PIN = 11;
-int buttonStateUp = 0;
-int buttonStateDown = 0;
+int goingUpButtonPressed = 0;
+int goingDownButtonPressed = 0;
 
 const int DOOR_LED_PIN = 10;
 
@@ -20,13 +23,14 @@ int noObstacle = true;
 int liftPosition = -1;
 int openDoor = 0;
 
-boolean resetButtons = false;
+boolean resetFloorButtons = false;
 
 void setup() {
   Serial.begin(9600);
 
   // For communication
   Wire.begin(1);
+  Wire.onRequest(checkLiftDetectedByIrAndSendToMaster());
   Wire.onReceive(getLiftPosition);
   Wire.onRequest(sendEvent);
 
@@ -44,74 +48,89 @@ void setup() {
 
   // For LED goes on when door open
   pinMode(DOOR_LED_PIN, OUTPUT);
-  
+
   // For IR obstacle module (lift position near)
   pinMode(noObstacle, INPUT);
 }
 
 void loop() {
-//  displayDigit(1);
-  delay(1000);
-//  turnOff();
+  keepReadingButtonUpAndDownUntilPressed(); // constantly read BUTTON_UP and DOWN until pressed
 
-  if (buttonStateUp == 0) {
-    buttonStateUp = digitalRead(BUTTON_UP_PIN);
-  }
-  
-//  if (buttonStateUp) {
-//    Serial.println("Button pressed");
-//  } else {
-//    Serial.println("Button not pressed!");
-//  }
-  
-  if (openDoor) {
-    digitalWrite(DOOR_LED_PIN, HIGH); 
-  } else {
-    digitalWrite(DOOR_LED_PIN, LOW); 
-  }
-  
-  checkLiftDetectedByIr();
-  
-  // The lift remains on buttonsState pressed until master gives a reset
-  if (resetButtons) {
-    buttonStateUp = 0;
-    resetButtons = false;
-  }
+  handleDoorOpeningAndClosing(); // turn led on or off if openDoor = true
+
+  ifLiftArrivedResetGoingUpOrDownButton(); // The lift buttons remain on pressed state until master gives a reset
 }
 
-// Executes whenever data is received from master
-// this function is registered as an event
+/*********************** I2C CODE ***********************/
+
+// get liftPosition and show it on LED display
 void getLiftPosition(int howMany) {
   liftPosition = Wire.read();           // receive bit for lift as an integer
   openDoor = Wire.read();  // receive bit for floor door
-  resetButtons = Wire.read(); // 
+  resetFloorButtons = Wire.read(); // 
   Serial.println(liftPosition);             // print the integer testing
   Serial.println(openDoor);
-  displayController(liftPosition);          // show lift current location
+
+  displayHandler(liftPosition);          // show lift current location
 }
 
 // Send that I pressed the request lift button
 void sendEvent() {
-  Serial.println(buttonStateUp);
-  Serial.println(buttonStateDown);
-  byte buttonStates[] = { buttonStateUp, buttonStateDown };
+  Serial.println(goingUpButtonPressed);
+  Serial.println(goingDownButtonPressed);
+  byte buttonStates[] = { 
+    goingUpButtonPressed, goingDownButtonPressed 
+  };
   Wire.write(buttonStates, 2);
 }
 
-void displayController(int x) {
-  if (x >= 0 && x <= 9) {
-    turnOff();
-    displayDigit(x); 
+void checkLiftDetectedByIrAndSendToMaster() {
+  noObstacle = digitalRead(IR_OBSTACLE_PIN);
+
+  // TODO ADD THE CODE FOR SENDING DATA TO MASTER HERE
+
+  // remove after testing
+  if (noObstacle) {
+    Serial.println("clear");
+  } else {
+    Serial.println("OBSTACLE!!, OBSTACLE!!");
   }
 }
 
-void checkLiftDetectedByIr() {
- noObstacle = digitalRead(IR_OBSTACLE_PIN);
-  if (noObstacle) {
-    // TODO: ADD THE CODE TO OPEN DOOR HERE
-    Serial.println("clear"); // remove after testing
+/*********************** NON I2C CODE ***********************/
+
+void keepReadingButtonUpAndDownUntilPressed() {
+  if (goingUpButtonPressed == 0) {
+    goingUpButtonPressed = digitalRead(BUTTON_UP_PIN);
+  }
+  if (goingDownButtonPressed == 0) {
+    goingDownButtonPressed = digitalRead(BUTTON_UP_PIN);
+  }
+}
+
+void handleDoorOpeningAndClosing() {
+  if (openDoor) {
+    digitalWrite(DOOR_LED_PIN, HIGH);
   } else {
-    Serial.println("OBSTACLE!!, OBSTACLE!!"); // remove after testing
+    digitalWrite(DOOR_LED_PIN, LOW);
+  }
+}
+
+void ifLiftArrivedResetGoingUpOrDownButton() {
+  if (resetFloorButtons) {
+    if (true) { // TODO: ONLY RESET IF LIFT GOING IN THE CORRECT DIRECTION AS THE BUTTON PRESSED
+      goingUpButtonPressed = 0;
+    } else {
+      goingDownButtonPressed = 0;
+    }
+    resetFloorButtons = false;
+  }
+}
+
+void displayHandler(int x) {
+  if (x >= 0 && x <= 9) {
+    turnOff();
+    displayDigit(x); 
   }
 }
 
