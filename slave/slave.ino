@@ -1,36 +1,41 @@
 #include <Wire.h>
 
-#define A = 2;  // For displaying segment "A"
-#define B = 3;  // For displaying segment "B"
-#define C = 4;  // For displaying segment "C"
-#define D = 5;  // For displaying segment "D"
-#define E = 6;  // For displaying segment "E"
-#define F = 8;  // For displaying segment "F"
-#define G = 9;  // For displaying segment "G"
+#define A 2 // For displaying segment "A"
+#define B 3 // For displaying segment "B"
+#define C 4 // For displaying segment "C"
+#define D 5 // For displaying segment "D"
+#define E 6 // For displaying segment "E"
+#define F 8 // For displaying segment "F"
+#define G 9 // For displaying segment "G"
 
 // i2c gives back byte and arduino can turn it to an int 0/1
 // but also into boolean, so why are we using int instead of boolean everywhere? - yoshua
 
+// For buttons to request the lift
 const int BUTTON_UP_PIN = 11;
 int goingUpButtonPressed = 0;
 int goingDownButtonPressed = 0;
+boolean resetFloorButtons = false;
 
+// For LED to simulate door opening/closing
 const int DOOR_LED_PIN = 10;
 
+// For ir detect lift arrived
 const int IR_OBSTACLE_PIN = 13;
-int noObstacle = true;
+int noObstacle = 1;                 // true
 
+// For displaying lift position on LED display
 int liftPosition = -1;
-int openDoor = 0;
 
-boolean resetFloorButtons = false;
+// For receiving command for save to open door
+int openDoor = 0;
 
 void setup() {
   Serial.begin(9600);
 
   // For communication
   Wire.begin(1);
-  Wire.onRequest(checkLiftDetectedByIrAndSendToMaster());
+  Wire.onRequest(checkLiftDetectedByIrAndSendToMaster);
   Wire.onReceive(getLiftPosition);
   Wire.onRequest(sendPressedGoingUpOrGoingDown);
 
@@ -46,10 +51,10 @@ void setup() {
   // For get lift. NOTE: only 1 of the 2 buttons for up or down
   pinMode(BUTTON_UP_PIN, INPUT);
 
-  // For LED goes on when door open
+  // For LED to simulate door opening/closing
   pinMode(DOOR_LED_PIN, OUTPUT);
 
-  // For IR obstacle module (lift position near)
+  // For ir detect lift arrived
   pinMode(noObstacle, INPUT);
 }
 
@@ -68,16 +73,19 @@ void getLiftPosition(int howMany) {
   liftPosition = Wire.read();           // receive bit for lift as an integer
   openDoor = Wire.read();               // receive bit for floor door
   resetFloorButtons = Wire.read();
+
   Serial.println(liftPosition);  // remove after testing
   Serial.println(openDoor);  // remove after testing
+  Serial.println(resetFloorButtons); // remove after testing
 
-  displayHandler(liftPosition);         // show lift current location
+  ledDisplayHandler(liftPosition);         // show lift current location
 }
 
 // Send that I pressed the request lift button
 void sendPressedGoingUpOrGoingDown() {
   Serial.println(goingUpButtonPressed);   // remove after testing
   Serial.println(goingDownButtonPressed); // remove after testing
+
   byte buttonStates[] = { 
     goingUpButtonPressed, goingDownButtonPressed 
   };
@@ -87,7 +95,7 @@ void sendPressedGoingUpOrGoingDown() {
 void checkLiftDetectedByIrAndSendToMaster() {
   noObstacle = digitalRead(IR_OBSTACLE_PIN);
 
-  Write.write(noObstacle, 1);
+  Wire.write(noObstacle); // TODO check if this is working with master
 
   // remove after testing
   if (noObstacle) {
@@ -127,7 +135,7 @@ void ifLiftArrivedResetGoingUpOrDownButton() {
   }
 }
 
-void displayHandler(int x) {
+void ledDisplayHandler(int x) {
   if (x >= 0 && x <= 9) {
     turnOff();
     displayDigit(x); 
@@ -169,12 +177,12 @@ void displayDigit(int digit) {
 }
 
 void turnOff() {
-  digitalWrite(A,LOW);
-  digitalWrite(B,LOW);
-  digitalWrite(C,LOW);
-  digitalWrite(D,LOW);
-  digitalWrite(E,LOW);
-  digitalWrite(F,LOW);
-  digitalWrite(G,LOW);
+  digitalWrite(A, LOW);
+  digitalWrite(B, LOW);
+  digitalWrite(C, LOW);
+  digitalWrite(D, LOW);
+  digitalWrite(E, LOW);
+  digitalWrite(F, LOW);
+  digitalWrite(G, LOW);
 }
 
