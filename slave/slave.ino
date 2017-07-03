@@ -13,6 +13,7 @@
 
 // For buttons to request the lift
 const int BUTTON_UP_PIN = 11;
+// IMPLEMENT BUTTON DOWN PIN                <----------
 int goingUpButtonPressed = 0;
 int goingDownButtonPressed = 0;
 boolean resetFloorButtons = false;
@@ -34,10 +35,10 @@ void setup() {
   Serial.begin(9600);
 
   // For communication
-  Wire.begin(1);
-  Wire.onRequest(checkLiftDetectedByIrAndSendToMaster);
-  Wire.onReceive(getLiftPosition);
-  Wire.onRequest(sendPressedGoingUpOrGoingDown);
+  Wire.begin(8); // https://www.arduino.cc/en/Reference/Wire inside NOTE: addresses should start from 8 
+  Wire.onReceive(getLiftRelatedData);
+  Wire.onRequest(sendButtonStatesGoingUpAndDown);
+  Wire.onRequest(checkLiftDetectedByIrAndSendToMaster); // <------------------ is this possible (can arduino distinguish different requests) or should all be inside a single request
 
   // For led display segments
   pinMode(A, OUTPUT);
@@ -48,7 +49,7 @@ void setup() {
   pinMode(F, OUTPUT);
   pinMode(G, OUTPUT);
 
-  // For get lift. NOTE: only 1 of the 2 buttons for up or down
+  // For get lift. NOTE: only 1 of the 2 buttons for up or down  <---------------
   pinMode(BUTTON_UP_PIN, INPUT);
 
   // For LED to simulate door opening/closing
@@ -69,7 +70,7 @@ void loop() {
 /*********************** I2C CODE ***********************/
 
 // get liftPosition and show it on LED display
-void getLiftPosition(int howMany) {
+void getLiftRelatedData(int numBytes) {
   liftPosition = Wire.read();           // receive bit for lift as an integer
   openDoor = Wire.read();               // receive bit for floor door
   resetFloorButtons = Wire.read();
@@ -82,7 +83,7 @@ void getLiftPosition(int howMany) {
 }
 
 // Send that I pressed the request lift button
-void sendPressedGoingUpOrGoingDown() {
+void sendButtonStatesGoingUpAndDown() {
   Serial.println(goingUpButtonPressed);   // remove after testing
   Serial.println(goingDownButtonPressed); // remove after testing
 
@@ -95,7 +96,7 @@ void sendPressedGoingUpOrGoingDown() {
 void checkLiftDetectedByIrAndSendToMaster() {
   noObstacle = digitalRead(IR_OBSTACLE_PIN);
 
-  Wire.write(noObstacle); // TODO check if this is working with master
+  Wire.write(noObstacle); // TODO check if this is working with master <-------------
 
   // remove after testing
   if (noObstacle) {

@@ -46,15 +46,15 @@ void loop() {
 /*********************** I2C CODE ***********************/
 
 void getAndSendDataToAllFloors() {
-  for (int i = 0; i < CONNECTED_SLAVES; i++) {
-    readSerialAndSendToFloor(i);
+  for (int i = 8; i < CONNECTED_SLAVES + 8; i++) { // https://www.arduino.cc/en/Reference/Wire inside NOTE: addresses should start from 8 
+    readSerialAndSendLiftRelatedData(i);
     getButtonPressedOfFloor(i); // De delay mogelijk verwijderen om de motor 
     // nog soepeler te laten lopen, of the for loop in tunrMotorOnRequest verlengen
   }
 }
 
-void readSerialAndSendToFloor(int floorIndex) {
-  while (Serial.available()) {
+void readSerialAndSendLiftRelatedData(int floorIndex) {
+  if (Serial.available()) {
     String s = Serial.readString();
     int currentFloor = s.substring(0, 1).toInt();
     int openDoor = s.substring(1, 2).toInt();
@@ -73,7 +73,7 @@ void readSerialAndSendToFloor(int floorIndex) {
   }
 }
 
-void getButtonPressedOfFloor(int floorIndex) {
+void getButtonStatesGoingUpAndDown(int floorIndex) {
   Wire.requestFrom(floorIndex, 2);
   delay(10);
 
