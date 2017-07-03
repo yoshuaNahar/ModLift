@@ -1,12 +1,12 @@
 #include <Wire.h>
 
-const int A = 2;  // For displaying segment "A"
-const int B = 3;  // For displaying segment "B"
-const int C = 4;  // For displaying segment "C"
-const int D = 5;  // For displaying segment "D"
-const int E = 6;  // For displaying segment "E"
-const int F = 8;  // For displaying segment "F"
-const int G = 9;  // For displaying segment "G"
+#define A = 2;  // For displaying segment "A"
+#define B = 3;  // For displaying segment "B"
+#define C = 4;  // For displaying segment "C"
+#define D = 5;  // For displaying segment "D"
+#define E = 6;  // For displaying segment "E"
+#define F = 8;  // For displaying segment "F"
+#define G = 9;  // For displaying segment "G"
 
 // i2c gives back byte and arduino can turn it to an int 0/1
 // but also into boolean, so why are we using int instead of boolean everywhere? - yoshua
@@ -32,7 +32,7 @@ void setup() {
   Wire.begin(1);
   Wire.onRequest(checkLiftDetectedByIrAndSendToMaster());
   Wire.onReceive(getLiftPosition);
-  Wire.onRequest(sendEvent);
+  Wire.onRequest(sendPressedGoingUpOrGoingDown);
 
   // For lift segments
   pinMode(A, OUTPUT);
@@ -56,9 +56,9 @@ void setup() {
 void loop() {
   keepReadingButtonUpAndDownUntilPressed(); // constantly read BUTTON_UP and DOWN until pressed
 
-  handleDoorOpeningAndClosing(); // turn led on or off if openDoor = true
+  handleDoorOpeningAndClosing();            // turn led on or off if openDoor = true
 
-  ifLiftArrivedResetGoingUpOrDownButton(); // The lift buttons remain on pressed state until master gives a reset
+  ifLiftArrivedResetGoingUpOrDownButton();  // The lift buttons remain on pressed state until master gives a reset
 }
 
 /*********************** I2C CODE ***********************/
@@ -66,18 +66,18 @@ void loop() {
 // get liftPosition and show it on LED display
 void getLiftPosition(int howMany) {
   liftPosition = Wire.read();           // receive bit for lift as an integer
-  openDoor = Wire.read();  // receive bit for floor door
-  resetFloorButtons = Wire.read(); // 
-  Serial.println(liftPosition);             // print the integer testing
-  Serial.println(openDoor);
+  openDoor = Wire.read();               // receive bit for floor door
+  resetFloorButtons = Wire.read();
+  Serial.println(liftPosition);  // remove after testing
+  Serial.println(openDoor);  // remove after testing
 
-  displayHandler(liftPosition);          // show lift current location
+  displayHandler(liftPosition);         // show lift current location
 }
 
 // Send that I pressed the request lift button
-void sendEvent() {
-  Serial.println(goingUpButtonPressed);
-  Serial.println(goingDownButtonPressed);
+void sendPressedGoingUpOrGoingDown() {
+  Serial.println(goingUpButtonPressed);   // remove after testing
+  Serial.println(goingDownButtonPressed); // remove after testing
   byte buttonStates[] = { 
     goingUpButtonPressed, goingDownButtonPressed 
   };
@@ -87,7 +87,7 @@ void sendEvent() {
 void checkLiftDetectedByIrAndSendToMaster() {
   noObstacle = digitalRead(IR_OBSTACLE_PIN);
 
-  // TODO ADD THE CODE FOR SENDING DATA TO MASTER HERE
+  Write.write(noObstacle, 1);
 
   // remove after testing
   if (noObstacle) {
