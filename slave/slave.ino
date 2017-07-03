@@ -39,7 +39,7 @@ void setup() {
   Wire.onReceive(getLiftPosition);
   Wire.onRequest(sendPressedGoingUpOrGoingDown);
 
-  // For lift segments
+  // For led display segments
   pinMode(A, OUTPUT);
   pinMode(B, OUTPUT);
   pinMode(C, OUTPUT);
