@@ -31,10 +31,11 @@ int liftPosition = -1;
 // For receiving command for save to open door
 int openDoor = 0;
 
+// For Data to send to master
+byte sendingData[3];
+
 void setup() {
   Serial.begin(9600);
-
-  
 
   // For led display segments
   pinMode(A, OUTPUT);
@@ -61,8 +62,7 @@ void setup() {
   // For communication
   Wire.begin(address + 8); // https://www.arduino.cc/en/Reference/Wire inside NOTE: addresses should start from 8 
   Wire.onReceive(getLiftRelatedData);
-  Wire.onRequest(sendButtonStatesGoingUpAndDown);
-  Wire.onRequest(checkLiftDetectedByIrAndSendToMaster); // <------------------ is this possible (can arduino distinguish different requests) or should all be inside a single request
+  Wire.onRequest(sendDataToMaster);
 }
 
 void loop() {
@@ -88,21 +88,26 @@ void getLiftRelatedData(int numBytes) {
   ledDisplayHandler(liftPosition);         // show lift current location
 }
 
+void sendDataToMaster() {
+  sendButtonStatesGoingUpANdDown();
+  checkLiftDetectedByIrAndSendToMaster();
+
+  Wire.write(sendingData, 3);
+}
+
 // Send that I pressed the request lift button
 void sendButtonStatesGoingUpAndDown() {
   Serial.println(goingUpButtonPressed);   // remove after testing
   Serial.println(goingDownButtonPressed); // remove after testing
 
-  byte buttonStates[] = { 
-    goingUpButtonPressed, goingDownButtonPressed 
-  };
-  Wire.write(buttonStates, 2);
+  sendingData[0] = goingUpButtonPressed;
+  sendingData[1] = goingDownButtonPressed; 
 }
 
 void checkLiftDetectedByIrAndSendToMaster() {
   noObstacle = digitalRead(IR_OBSTACLE_PIN);
 
-  Wire.write(noObstacle); // TODO check if this is working with master <-------------
+  sendingData[2] = noObstacle;
 
   // remove after testing
   if (noObstacle) {
