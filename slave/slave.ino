@@ -31,7 +31,7 @@ int liftPosition = -1;
 // For receiving command for save to open door
 int openDoor = 0;
 
-// For Data to send to master
+// For data to send to master
 byte sendingData[3];
 
 void setup() {
@@ -83,13 +83,14 @@ void getLiftRelatedData(int numBytes) {
 
   Serial.println(liftPosition);  // remove after testing
   Serial.println(openDoor);  // remove after testing
+  Serial.print("Reset floor button");
   Serial.println(resetFloorButtons); // remove after testing
 
   ledDisplayHandler(liftPosition);         // show lift current location
 }
 
 void sendDataToMaster() {
-  sendButtonStatesGoingUpANdDown();
+  sendButtonStatesGoingUpAndDown();
   checkLiftDetectedByIrAndSendToMaster();
 
   Wire.write(sendingData, 3);
@@ -126,6 +127,10 @@ void keepReadingButtonUpAndDownUntilPressed() {
   if (goingDownButtonPressed == 0) {
     goingDownButtonPressed = digitalRead(BUTTON_DOWN_PIN);
   }
+  Serial.print("goingUpButtonPressed: ");
+  Serial.println(goingUpButtonPressed);
+  Serial.print("goingDownButtonPressed: ");
+  Serial.println(goingDownButtonPressed);
 }
 
 void handleDoorOpeningAndClosing() {
@@ -134,35 +139,29 @@ void handleDoorOpeningAndClosing() {
   } else {
     digitalWrite(DOOR_LED_PIN, LOW);
   }
+  Serial.print("openDoor: ");
+  Serial.println(openDoor);
 }
 
 void ifLiftArrivedResetGoingUpOrDownButton() {
   if (resetFloorButtons) {
-    if (true) { // TODO: ONLY RESET IF LIFT GOING IN THE CORRECT DIRECTION AS THE BUTTON PRESSED
-      goingUpButtonPressed = 0;
-    } else {
-      goingDownButtonPressed = 0;
-    }
+    Serial.println("floor buttons reset");
+    goingUpButtonPressed = 0;
+    goingDownButtonPressed = 0;
     resetFloorButtons = false;
   }
 }
 
-void ledDisplayHandler(int x) {
-  if (x >= 0 && x <= 9) {
-    turnOff();
-    displayDigit(x); 
-  }
-}
-
-// Run during initialization
+/*********************** INITIALIZE LIFT CODE ***********************/
 int determineAddress() {
   int selectingFloor = 0;
   while (true) {
+    Serial.print("selectedFloor: ");
     Serial.println(selectingFloor);
     ledDisplayHandler(selectingFloor);
     keepReadingButtonUpAndDownUntilPressed();
     if (goingUpButtonPressed) {
-      Serial.println("ButtonPressed");
+      Serial.println("goingUpButtonPressed");
       selectingFloor++;
       goingUpButtonPressed = 0;
       if (selectingFloor > 9) {
@@ -170,11 +169,18 @@ int determineAddress() {
       }
     }
     if (goingDownButtonPressed) {
-      Serial.println("Floor selected");
+      Serial.println("Floor selected (goingDownButtonPressed)");
       goingDownButtonPressed = 0;
       return selectingFloor;
     }
     delay(1000);
+  }
+}
+
+void ledDisplayHandler(int x) {
+  if (x >= 0 && x <= 9) {
+    turnOff();
+    displayDigit(x); 
   }
 }
 
