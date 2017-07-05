@@ -1,12 +1,13 @@
 #include <Wire.h>
 
-#define A 2 // For displaying segment "A"
-#define B 3 // For displaying segment "B"
-#define C 4 // For displaying segment "C"
-#define D 5 // For displaying segment "D"
-#define E 6 // For displaying segment "E"
-#define F 8 // For displaying segment "F"
-#define G 9 // For displaying segment "G"
+#define A 3// For displaying segment "A"
+#define B 2 // For displaying segment "B"
+#define C 7 // For displaying segment "C"
+#define D 8 // For displaying segment "D"
+#define E 9 // For displaying segment "E"
+#define F 4 // For displaying segment "F"
+#define G 5 // For displaying segment "G"
+#define DP 6 // For displaying segment "."
 
 // i2c gives back byte and arduino can turn it to an int 0/1
 // but also into boolean, so why are we using int instead of boolean everywhere? - yoshua
