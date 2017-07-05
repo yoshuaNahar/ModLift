@@ -13,7 +13,7 @@
 
 // For buttons to request the lift
 const int BUTTON_UP_PIN = 11;
-// IMPLEMENT BUTTON DOWN PIN                <----------
+const int BUTTON_DOWN_PIN = 12;
 int goingUpButtonPressed = 0;
 int goingDownButtonPressed = 0;
 boolean resetFloorButtons = false;
@@ -34,11 +34,7 @@ int openDoor = 0;
 void setup() {
   Serial.begin(9600);
 
-  // For communication
-  Wire.begin(8); // https://www.arduino.cc/en/Reference/Wire inside NOTE: addresses should start from 8 
-  Wire.onReceive(getLiftRelatedData);
-  Wire.onRequest(sendButtonStatesGoingUpAndDown);
-  Wire.onRequest(checkLiftDetectedByIrAndSendToMaster); // <------------------ is this possible (can arduino distinguish different requests) or should all be inside a single request
+  
 
   // For led display segments
   pinMode(A, OUTPUT);
@@ -49,14 +45,24 @@ void setup() {
   pinMode(F, OUTPUT);
   pinMode(G, OUTPUT);
 
-  // For get lift. NOTE: only 1 of the 2 buttons for up or down  <---------------
+  // For get lift
   pinMode(BUTTON_UP_PIN, INPUT);
-
+  pinMode(BUTTON_DOWN_PIN, INPUT);
+  
   // For LED to simulate door opening/closing
   pinMode(DOOR_LED_PIN, OUTPUT);
 
   // For ir detect lift arrived
   pinMode(noObstacle, INPUT);
+
+  // For initializationl
+  int address = determineAddress();
+
+  // For communication
+  Wire.begin(address + 8); // https://www.arduino.cc/en/Reference/Wire inside NOTE: addresses should start from 8 
+  Wire.onReceive(getLiftRelatedData);
+  Wire.onRequest(sendButtonStatesGoingUpAndDown);
+  Wire.onRequest(checkLiftDetectedByIrAndSendToMaster); // <------------------ is this possible (can arduino distinguish different requests) or should all be inside a single request
 }
 
 void loop() {
@@ -113,7 +119,7 @@ void keepReadingButtonUpAndDownUntilPressed() {
     goingUpButtonPressed = digitalRead(BUTTON_UP_PIN);
   }
   if (goingDownButtonPressed == 0) {
-    goingDownButtonPressed = digitalRead(BUTTON_UP_PIN);
+    goingDownButtonPressed = digitalRead(BUTTON_DOWN_PIN);
   }
 }
 
@@ -140,6 +146,30 @@ void ledDisplayHandler(int x) {
   if (x >= 0 && x <= 9) {
     turnOff();
     displayDigit(x); 
+  }
+}
+
+// Run during initialization
+int determineAddress() {
+  int selectingFloor = 0;
+  while (true) {
+    Serial.println(selectingFloor);
+    ledDisplayHandler(selectingFloor);
+    keepReadingButtonUpAndDownUntilPressed();
+    if (goingUpButtonPressed) {
+      Serial.println("ButtonPressed");
+      selectingFloor++;
+      goingUpButtonPressed = 0;
+      if (selectingFloor > 9) {
+        selectingFloor = 0;
+      }
+    }
+    if (goingDownButtonPressed) {
+      Serial.println("Floor selected");
+      goingDownButtonPressed = 0;
+      return selectingFloor;
+    }
+    delay(1000);
   }
 }
 
