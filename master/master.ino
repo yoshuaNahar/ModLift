@@ -56,9 +56,9 @@ void loop() {
 void getAndSendDataToAllFloors() {
   for (int i = 8; i < CONNECTED_SLAVES + 8; i++) { // https://www.arduino.cc/en/Reference/Wire inside NOTE: addresses should start from 8 
     //readSerialAndSendLiftRelatedData(i);
-    sendLiftRelatedData(i);
-    delay(5);
     getButtonPressedOfFloor(i); // De delay mogelijk verwijderen om de motor 
+    delay(5);
+    sendLiftRelatedData(i);
     // nog soepeler te laten lopen, of the for loop in tunrMotorOnRequest verlengen
   }
 }
