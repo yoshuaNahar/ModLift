@@ -11,7 +11,7 @@ int steps = 0;
 boolean clockwise = true;
 
 // For I2C and lift
-const int CONNECTED_SLAVES = 1;
+const int CONNECTED_SLAVES = 2;
 int floorButtonUp[CONNECTED_SLAVES];
 int floorButtonDown[CONNECTED_SLAVES];
 int currentFloor = 0;
@@ -89,7 +89,9 @@ void sendLiftRelatedData(int floorIndex) {
   Serial.print(" and ");
   Serial.print(doorOpen[floorIndex-8]);
   Serial.print(" and ");
-  Serial.println(resetFloorButtons[floorIndex-8]);
+  Serial.print(resetFloorButtons[floorIndex-8]);
+  Serial.print(" to slave ");
+  Serial.println(floorIndex);
   Wire.beginTransmission(floorIndex);
     Wire.write(currentFloor);
     Wire.write(doorOpen[floorIndex-8]);
@@ -137,13 +139,13 @@ void checkForMoveLift() {
   if (floorButtonDown[currentFloor] || floorButtonUp[currentFloor]) {
     moveUp = false;
     moveDown = false;
-    doorOpen[currentFloor-1] = true;
-    resetFloorButtons[currentFloor-1];
+    doorOpen[currentFloor] = true;
+    resetFloorButtons[currentFloor] = true;
     Serial.println("Current floor wants to use lift");
     return;
   } else {
-    doorOpen[currentFloor-1] = false;
-    resetFloorButtons[currentFloor-1] = false;
+    doorOpen[currentFloor] = false;
+    resetFloorButtons[currentFloor] = false;
   }
 
   if (movingUp) {
@@ -164,7 +166,7 @@ void checkForMoveLift() {
       }
     }
     // check floor below current floor to see if anyone wants to go down
-    for(int i = currentFloor; i > 0; i--) {
+    for(int i = currentFloor; i >= 0; i--) {
       if (floorButtonDown[i] == 1) {
         Serial.println("A floor below me wants to go up");
         moveDown = true;
@@ -173,7 +175,7 @@ void checkForMoveLift() {
       }
     }
     // check floors below current floor to see if anyone wants to go up
-    for(int i = currentFloor; i > 0; i--) {
+    for(int i = currentFloor; i >= 0; i--) {
       if (floorButtonUp[i] == 1) {
         Serial.println("A floor below me wants to go down");
         moveDown = true;
@@ -183,7 +185,7 @@ void checkForMoveLift() {
     }
   } else {
     // check floors below current floor to see if anyone wants to go up
-    for(int i = currentFloor; i > 0; i--) {
+    for(int i = currentFloor; i >= 0; i--) {
       if (floorButtonUp[i] == 1) {
         Serial.println("A floor below me wants to go up");
         moveDown = true;
@@ -191,7 +193,7 @@ void checkForMoveLift() {
       }
     }
     // check floor below current floor to see if anyone wants to go down
-    for (int i = currentFloor; i > 0; i--) {
+    for (int i = currentFloor; i >= 0; i--) {
       if (floorButtonDown[i] == 1) {
         Serial.println("A floor below me wants to go down");
         moveDown = true;
