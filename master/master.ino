@@ -129,11 +129,14 @@ void debugArray() {
 }
 
 void checkForMoveLift() {
-  if (floorButtonDown[currentFloor] || floorButtonUp[currentFloor]) { // floor
+  if ((floorButtonDown[currentFloor] || floorButtonUp[currentFloor]) && liftArrived[currentFloor]) {
     moveUp = false;
     moveDown = false;
     doorOpen[currentFloor] = true;
     Serial.println("Current floor wants to use lift");
+
+    delay(3000); // testing if needed
+
     return;
   } else {
     doorOpen[currentFloor] = false;

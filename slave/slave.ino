@@ -103,17 +103,17 @@ void sendButtonStatesGoingUpAndDown() {
   sendingData[1] = goingDownButtonPressed; 
 }
 
-void checkLiftArrivedAndSendToMaster() {
+void checkLiftArrived() {
   liftArrived = digitalRead(IR_PIN);
   liftArrived = !liftArrived; // because output is false if object arrived
 
-  sendingData[2] = noLiftArrived;
+  sendingData[2] = liftArrived;
 
   // remove after testing
-  if (noLiftArrived) {
-    Serial.println("clear");
+  if (liftArrived) {
+    Serial.println("clear, no lift arrived");
   } else {
-    Serial.println("OBSTACLE!!, OBSTACLE!!");
+    Serial.println("OBSTACLE aka LIFT Arrived");
   }
 }
 
