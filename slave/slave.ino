@@ -89,7 +89,7 @@ void getLiftRelatedData(int numBytes) {
 
 void sendDataToMaster() {
   sendButtonStatesGoingUpAndDown();
-  checkLiftArrivedAndSendToMaster();
+  checkLiftArrived();
 
   Wire.write(sendingData, 3);
 }
