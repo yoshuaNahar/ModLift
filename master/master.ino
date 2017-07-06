@@ -14,11 +14,13 @@ boolean clockwise = true;
 const int CONNECTED_SLAVES = 2;
 int floorButtonUp[CONNECTED_SLAVES];
 int floorButtonDown[CONNECTED_SLAVES];
+boolean doorOpen[CONNECTED_SLAVES];           // If Door on floor is open, also reset floor get lift buttons
+boolean liftArrived[CONNECTED_SLAVES];
+
 int currentFloor = 0;
 boolean movingUp = true;                      // which direction the elevator is going
 boolean moveUp = false;                       // Should the moter move clockwise
 boolean moveDown = false;                     // Should the motor move counter-clockwise
-boolean doorOpen[CONNECTED_SLAVES];           // If Door on floor is open, also reset floor get lift buttons
 
 void setup() {
   Serial.begin(9600);
@@ -31,6 +33,7 @@ void setup() {
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
 
+  // why does this only happen for doorOpen and not floorButtonUp and floorButtonDown
   for (int i = 0; i < CONNECTED_SLAVES; i++) {
     doorOpen[i] = false;
   }
@@ -95,19 +98,18 @@ void getButtonPressedOfFloor(int floorIndex) {
   delay(10);
 
   if (Wire.available()) {
-    int buttonUp = Wire.read();
-    int buttonDown = Wire.read();
-    int irObstacleDetected = Wire.read();
+    floorButtonUp[floorIndex-8] = Wire.read();
+    floorButtonDown[floorIndex-8] = Wire.read();
+    liftArrived[floorIndex-8] = Wire.read();
+    
     Serial.print("Button up ");
-    Serial.print(buttonUp);
+    Serial.print(floorButtonUp[floorIndex-8]);
     Serial.print(" and button down ");
-    Serial.print(buttonDown);
+    Serial.print(floorButtonDown[floorIndex-8]);
     Serial.print(" and ir data ");
-    Serial.print(irObstacleDetected);
+    Serial.print(liftArrived[floorIndex-8]);
     Serial.print(" from slave ");
     Serial.println(floorIndex);
-    floorButtonUp[floorIndex-8] = buttonUp;
-    floorButtonDown[floorIndex-8] = buttonDown;
   }
 }
 
@@ -127,7 +129,7 @@ void debugArray() {
 }
 
 void checkForMoveLift() {
-  if (floorButtonDown[currentFloor] || floorButtonUp[currentFloor]) {
+  if (floorButtonDown[currentFloor] || floorButtonUp[currentFloor]) { // floor
     moveUp = false;
     moveDown = false;
     doorOpen[currentFloor] = true;

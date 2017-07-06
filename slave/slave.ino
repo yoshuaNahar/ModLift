@@ -22,8 +22,9 @@ int goingDownButtonPressed = 0;
 const int DOOR_LED_PIN = 10;
 
 // For ir detect lift arrived
-const int IR_OBSTACLE_PIN = 13;
-int noObstacle = 1;                 // true
+// http://henrysbench.capnfatz.com/henrys-bench/arduino-sensors-and-input/arduino-ir-obstacle-sensor-tutorial-and-manual/
+const int IR_PIN = 13;
+int liftArrived = 0;      // false
 
 // For displaying lift position on LED display
 int liftPosition = -1;
@@ -54,7 +55,7 @@ void setup() {
   pinMode(DOOR_LED_PIN, OUTPUT);
 
   // For ir detect lift arrived
-  pinMode(noObstacle, INPUT);
+  pinMode(liftArrived, INPUT);
 
   // For initialization
   int address = determineAddress();
@@ -88,7 +89,7 @@ void getLiftRelatedData(int numBytes) {
 
 void sendDataToMaster() {
   sendButtonStatesGoingUpAndDown();
-  checkLiftDetectedByIrAndSendToMaster();
+  checkLiftArrivedAndSendToMaster();
 
   Wire.write(sendingData, 3);
 }
@@ -102,13 +103,14 @@ void sendButtonStatesGoingUpAndDown() {
   sendingData[1] = goingDownButtonPressed; 
 }
 
-void checkLiftDetectedByIrAndSendToMaster() {
-  noObstacle = digitalRead(IR_OBSTACLE_PIN);
+void checkLiftArrivedAndSendToMaster() {
+  liftArrived = digitalRead(IR_PIN);
+  liftArrived = !liftArrived; // because output is false if object arrived
 
-  sendingData[2] = noObstacle;
+  sendingData[2] = noLiftArrived;
 
   // remove after testing
-  if (noObstacle) {
+  if (noLiftArrived) {
     Serial.println("clear");
   } else {
     Serial.println("OBSTACLE!!, OBSTACLE!!");
