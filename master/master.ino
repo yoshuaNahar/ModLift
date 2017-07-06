@@ -15,11 +15,10 @@ const int CONNECTED_SLAVES = 2;
 int floorButtonUp[CONNECTED_SLAVES];
 int floorButtonDown[CONNECTED_SLAVES];
 int currentFloor = 0;
-boolean movingUp = true; // which direction the elevator is going
-boolean moveUp = false; // Should the moter move clockwise
-boolean moveDown = false; // Should the motor move counter-clockwise
-boolean doorOpen[CONNECTED_SLAVES];
-boolean resetFloorButtons[CONNECTED_SLAVES];
+boolean movingUp = true;                      // which direction the elevator is going
+boolean moveUp = false;                       // Should the moter move clockwise
+boolean moveDown = false;                     // Should the motor move counter-clockwise
+boolean doorOpen[CONNECTED_SLAVES];           // If Door on floor is open, also reset floor get lift buttons
 
 void setup() {
   Serial.begin(9600);
@@ -32,9 +31,8 @@ void setup() {
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
 
-  for(int i = 0; i < CONNECTED_SLAVES; i++){
+  for (int i = 0; i < CONNECTED_SLAVES; i++) {
     doorOpen[i] = false;
-    resetFloorButtons[i] = false;
   }
 }
 
@@ -55,11 +53,11 @@ void loop() {
 
 void getAndSendDataToAllFloors() {
   for (int i = 8; i < CONNECTED_SLAVES + 8; i++) { // https://www.arduino.cc/en/Reference/Wire inside NOTE: addresses should start from 8 
-    //readSerialAndSendLiftRelatedData(i);
-    getButtonPressedOfFloor(i); // De delay mogelijk verwijderen om de motor 
+    //readSerialAndSendLiftRelatedData(i); // testing code
+    getButtonPressedOfFloor(i); // De delay mogelijk verwijderen om de motor
+    // nog soepeler te laten lopen, of the for loop in tunrMotorOnRequest verlengen
     delay(5);
     sendLiftRelatedData(i);
-    // nog soepeler te laten lopen, of the for loop in tunrMotorOnRequest verlengen
   }
 }
 
@@ -68,17 +66,13 @@ void readSerialAndSendLiftRelatedData(int floorIndex) {
     String s = Serial.readString();
     int currentFloor = s.substring(0, 1).toInt();
     int openDoor = s.substring(1, 2).toInt();
-    int resetFloorButtons = s.substring(2).toInt();
     Serial.print("Sending ");
     Serial.print(currentFloor);
     Serial.print(" and ");
     Serial.print(openDoor);
-    Serial.print(" and ");
-    Serial.println(resetFloorButtons);
     Wire.beginTransmission(floorIndex);
     Wire.write(currentFloor);
     Wire.write(openDoor);
-    Wire.write(resetFloorButtons);
     Wire.endTransmission();
   }
 }
@@ -88,14 +82,11 @@ void sendLiftRelatedData(int floorIndex) {
   Serial.print(currentFloor);
   Serial.print(" and ");
   Serial.print(doorOpen[floorIndex-8]);
-  Serial.print(" and ");
-  Serial.print(resetFloorButtons[floorIndex-8]);
   Serial.print(" to slave ");
   Serial.println(floorIndex);
   Wire.beginTransmission(floorIndex);
-    Wire.write(currentFloor);
-    Wire.write(doorOpen[floorIndex-8]);
-    Wire.write(resetFloorButtons[floorIndex-8]);
+  Wire.write(currentFloor);
+  Wire.write(doorOpen[floorIndex-8]);
   Wire.endTransmission();
 }
 
@@ -122,15 +113,15 @@ void getButtonPressedOfFloor(int floorIndex) {
 
 /*********************** NON I2C CODE ***********************/
 
-void debugArray(){
+void debugArray() {
   Serial.print("Array length is ");
   Serial.println(sizeof(floorButtonUp)/sizeof(int));
   Serial.println("Floor button up");
-  for(int i = 0; i < (sizeof(floorButtonUp)/sizeof(int)); i++){
+  for (int i = 0; i < (sizeof(floorButtonUp)/sizeof(int)); i++) {
     Serial.println(floorButtonUp[i]);
   }
   Serial.println("Floor button down");
-  for(int i = 0; i < (sizeof(floorButtonDown)/sizeof(int)); i++){
+  for (int i = 0; i < (sizeof(floorButtonDown)/sizeof(int)); i++) {
     Serial.println(floorButtonDown[i]);
   }
 }
@@ -140,12 +131,10 @@ void checkForMoveLift() {
     moveUp = false;
     moveDown = false;
     doorOpen[currentFloor] = true;
-    resetFloorButtons[currentFloor] = true;
     Serial.println("Current floor wants to use lift");
     return;
   } else {
     doorOpen[currentFloor] = false;
-    resetFloorButtons[currentFloor] = false;
   }
 
   if (movingUp) {

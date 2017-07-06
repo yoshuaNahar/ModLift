@@ -17,7 +17,6 @@ const int BUTTON_UP_PIN = 11;
 const int BUTTON_DOWN_PIN = 12;
 int goingUpButtonPressed = 0;
 int goingDownButtonPressed = 0;
-boolean resetFloorButtons = false;
 
 // For LED to simulate door opening/closing
 const int DOOR_LED_PIN = 10;
@@ -57,7 +56,7 @@ void setup() {
   // For ir detect lift arrived
   pinMode(noObstacle, INPUT);
 
-  // For initializationl
+  // For initialization
   int address = determineAddress();
 
   // For communication
@@ -69,9 +68,8 @@ void setup() {
 void loop() {
   keepReadingButtonUpAndDownUntilPressed(); // constantly read BUTTON_UP and DOWN until pressed
 
-  handleDoorOpeningAndClosing();            // turn led on or off if openDoor = true
-
-  ifLiftArrivedResetGoingUpOrDownButton();  // The lift buttons remain on pressed state until master gives a reset
+  handleDoorAndResetFloorButtons();         // turn led on or off if openDoor = true
+                                            // also reset lift buttons, because lift already arrived
 }
 
 /*********************** I2C CODE ***********************/
@@ -80,12 +78,10 @@ void loop() {
 void getLiftRelatedData(int numBytes) {
   liftPosition = Wire.read();           // receive bit for lift as an integer
   openDoor = Wire.read();               // receive bit for floor door
-  resetFloorButtons = Wire.read();
 
   Serial.println(liftPosition);  // remove after testing
+  Serial.print("If openDoor = 1 LED ON + Reset floor button");
   Serial.println(openDoor);  // remove after testing
-  Serial.print("Reset floor button");
-  Serial.println(resetFloorButtons); // remove after testing
 
   ledDisplayHandler(liftPosition);         // show lift current location
 }
@@ -119,41 +115,8 @@ void checkLiftDetectedByIrAndSendToMaster() {
   }
 }
 
-/*********************** NON I2C CODE ***********************/
-
-void keepReadingButtonUpAndDownUntilPressed() {
-  if (goingUpButtonPressed == 0) {
-    goingUpButtonPressed = digitalRead(BUTTON_UP_PIN);
-  }
-  if (goingDownButtonPressed == 0) {
-    goingDownButtonPressed = digitalRead(BUTTON_DOWN_PIN);
-  }
-  Serial.print("goingUpButtonPressed: ");
-  Serial.println(goingUpButtonPressed);
-  Serial.print("goingDownButtonPressed: ");
-  Serial.println(goingDownButtonPressed);
-}
-
-void handleDoorOpeningAndClosing() {
-  if (openDoor) {
-    digitalWrite(DOOR_LED_PIN, HIGH);
-  } else {
-    digitalWrite(DOOR_LED_PIN, LOW);
-  }
-  Serial.print("openDoor: ");
-  Serial.println(openDoor);
-}
-
-void ifLiftArrivedResetGoingUpOrDownButton() {
-  if (resetFloorButtons) {
-    Serial.println("floor buttons reset");
-    goingUpButtonPressed = 0;
-    goingDownButtonPressed = 0;
-    resetFloorButtons = false;
-  }
-}
-
 /*********************** INITIALIZE LIFT CODE ***********************/
+
 int determineAddress() {
   int selectingFloor = 0;
   while (true) {
@@ -176,6 +139,39 @@ int determineAddress() {
     }
     delay(1000);
   }
+}
+
+/*********************** NON I2C CODE ***********************/
+
+void keepReadingButtonUpAndDownUntilPressed() {
+  if (goingUpButtonPressed == 0) {
+    goingUpButtonPressed = digitalRead(BUTTON_UP_PIN);
+  }
+  if (goingDownButtonPressed == 0) {
+    goingDownButtonPressed = digitalRead(BUTTON_DOWN_PIN);
+  }
+  Serial.print("goingUpButtonPressed: ");
+  Serial.println(goingUpButtonPressed);
+  Serial.print("goingDownButtonPressed: ");
+  Serial.println(goingDownButtonPressed);
+}
+
+void handleDoorAndResetFloorButtons() {
+  if (openDoor) {
+    resetFloorButtons(); 
+
+    digitalWrite(DOOR_LED_PIN, HIGH);
+  } else {
+    digitalWrite(DOOR_LED_PIN, LOW);
+  }
+  Serial.print("openDoor: ");
+  Serial.println(openDoor);
+}
+
+void resetFloorButtons() {
+  Serial.println("floor buttons reset");
+  goingUpButtonPressed = 0;
+  goingDownButtonPressed = 0;
 }
 
 void ledDisplayHandler(int x) {
