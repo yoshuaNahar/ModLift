@@ -18,6 +18,9 @@ boolean doorOpen[CONNECTED_SLAVES];           // If Door on floor is open, also 
 boolean liftArrived[CONNECTED_SLAVES];
 
 int currentFloor = 0;
+
+// de moveUp en moveDown is toch eigenlijk niet nodig? Er zijn maar 2 variablen nodig,
+// moet de lift bewegen en welke richting
 boolean movingUp = true;                      // which direction the elevator is going
 boolean moveUp = false;                       // Should the moter move clockwise
 boolean moveDown = false;                     // Should the motor move counter-clockwise
