@@ -9,8 +9,8 @@
 #define G 5 // For displaying segment "G"
 #define DP 6 // For displaying segment "."
 
-// i2c gives back byte and arduino can turn it to an int 0/1
-// but also into boolean, so why are we using int instead of boolean everywhere? - yoshua
+// Set debug mode with Serial
+const boolean DEBUG_MODE = false;
 
 // For buttons to request the lift
 const int BUTTON_UP_PIN = 11;
@@ -36,7 +36,9 @@ int openDoor = 0;
 byte sendingData[3];
 
 void setup() {
-  Serial.begin(9600);
+  if (DEBUG_MODE) {
+    Serial.begin(9600);
+  }
 
   // For led display segments
   pinMode(A, OUTPUT);
@@ -50,7 +52,7 @@ void setup() {
   // For get lift
   pinMode(BUTTON_UP_PIN, INPUT);
   pinMode(BUTTON_DOWN_PIN, INPUT);
-  
+
   // For LED to simulate door opening/closing
   pinMode(DOOR_LED_PIN, OUTPUT);
 
@@ -70,15 +72,16 @@ void setup() {
 
 void loop() {
   keepReadingButtonUpAndDownUntilPressed(); // constantly read BUTTON_UP and DOWN until pressed
-  setSendingDataArray(); // fill sending data array, so that wire function is clean!!!
+  setSendingDataArray();                    // fill sending data array, so that wire function is clean!!!
   handleDoorAndResetFloorButtons();         // turn led on or off if openDoor = true
-                                            // also reset lift buttons, because lift already arrived
+  // also reset lift buttons, because lift already arrived
   ledDisplayHandler(liftPosition);
 }
 
 /*********************** I2C CODE ***********************/
 
 // get liftPosition and show it on LED display
+// NOTE: Dont add Serial.prints or complex code in I2C functions. MITCH PLZ ADD SOURCE :)
 void getLiftRelatedData(int numBytes) {
   liftPosition = Wire.read();           // receive bit for lift as an integer
   openDoor = Wire.read();               // receive bit for floor door
@@ -88,29 +91,36 @@ void getLiftRelatedData(int numBytes) {
   //  Serial.println(openDoor);  // remove after testing
 }
 
+// send goingUpButton, goingDownButton and liftArrived (ir data)
 void sendDataToMaster() {
   Wire.write(sendingData, 3);
 }
 
-/*********************** INITIALIZE LIFT CODE ***********************/
+/*********************** INITIALIZE FLOOR CODE ***********************/
 
 int determineAddress() {
   int selectingFloor = 0;
   while (true) {
-    Serial.print("selectedFloor: ");
-    Serial.println(selectingFloor);
+    if (DEBUG_MODE) {
+      Serial.print("selectedFloor: ");
+      Serial.println(selectingFloor);
+    }
     keepReadingButtonUpAndDownUntilPressed();
     if (goingUpButtonPressed) {
-      Serial.println("goingUpButtonPressed");
+      if (DEBUG_MODE) {
+        Serial.println("goingUpButtonPressed");
+      }
       selectingFloor++;
       goingUpButtonPressed = 0;
       if (selectingFloor > 9) {
         selectingFloor = 0;
       }
-    }
-    ledDisplayHandler(selectingFloor);
-    if (goingDownButtonPressed) {
-      Serial.println("Floor selected (goingDownButtonPressed)");
+      ledDisplayHandler(selectingFloor);
+    } 
+    else if (goingDownButtonPressed) {
+      if (DEBUG_MODE) {
+        Serial.println("Floor selected (goingDownButtonPressed)");
+      }
       turnOff();
       delay(2000);
       goingDownButtonPressed = 0;
@@ -120,13 +130,15 @@ int determineAddress() {
   }
 }
 
-/*********************** NON I2C CODE ***********************/
+/*********************** FLOOR CODE ***********************/
 
 void setSendingDataArray() {
   //  Serial.println("Request received from master");
   // Serial.println("Checking button state" );
+  if (DEBUG_MODE) {
+    Serial.println("set SendingDataArray()");
+  }
   sendButtonStatesGoingUpAndDown();
-  //  Serial.println("Checking lift arrival");
   checkLiftArrived();
 }
 
@@ -141,11 +153,13 @@ void sendButtonStatesGoingUpAndDown() {
 
 void checkLiftArrived() {
   liftArrived = digitalRead(IR_PIN);
+
   // Serial.print("liftArrived: ");
   // Serial.println(liftArrived);
+
   liftArrived = !liftArrived; // because output is false if object arrived
 
-  sendingData[2] = liftArrived;
+    sendingData[2] = liftArrived;
 }
 
 void keepReadingButtonUpAndDownUntilPressed() {
@@ -155,6 +169,7 @@ void keepReadingButtonUpAndDownUntilPressed() {
   if (!goingDownButtonPressed) {
     goingDownButtonPressed = digitalRead(BUTTON_DOWN_PIN);
   }
+
   // Serial.print("goingUpButtonPressed: ");
   // Serial.println(goingUpButtonPressed);
   // Serial.print("goingDownButtonPressed: ");
@@ -166,7 +181,8 @@ void handleDoorAndResetFloorButtons() {
     resetFloorButtons(); 
 
     digitalWrite(DOOR_LED_PIN, HIGH);
-  } else {
+  } 
+  else {
     digitalWrite(DOOR_LED_PIN, LOW);
   }
   // Serial.print("openDoor: ");
@@ -174,6 +190,9 @@ void handleDoorAndResetFloorButtons() {
 }
 
 void resetFloorButtons() {
+  if (DEBUG_MODE) {
+    Serial.println("floor buttons reset");
+  }
   goingUpButtonPressed = 0;
   goingDownButtonPressed = 0;
 }
@@ -228,4 +247,5 @@ void turnOff() {
   digitalWrite(F, LOW);
   digitalWrite(G, LOW);
 }
+
 
