@@ -83,9 +83,9 @@ void getLiftRelatedData(int numBytes) {
   liftPosition = Wire.read();           // receive bit for lift as an integer
   openDoor = Wire.read();               // receive bit for floor door
 
-//  Serial.println(liftPosition);  // remove after testing
-// Serial.print("If openDoor = 1 LED ON + Reset floor button");
-//  Serial.println(openDoor);  // remove after testing
+  //  Serial.println(liftPosition);  // remove after testing
+  // Serial.print("If openDoor = 1 LED ON + Reset floor button");
+  //  Serial.println(openDoor);  // remove after testing
 }
 
 void sendDataToMaster() {
@@ -124,7 +124,7 @@ int determineAddress() {
 
 void setSendingDataArray() {
   //  Serial.println("Request received from master");
-//  Serial.println("Checking button state" );
+  // Serial.println("Checking button state" );
   sendButtonStatesGoingUpAndDown();
   //  Serial.println("Checking lift arrival");
   checkLiftArrived();
@@ -132,8 +132,8 @@ void setSendingDataArray() {
 
 // Send that I pressed the request lift button
 void sendButtonStatesGoingUpAndDown() {
-//  Serial.println(goingUpButtonPressed);   // remove after testing
-//  Serial.println(goingDownButtonPressed); // remove after testing
+  // Serial.println(goingUpButtonPressed);   // remove after testing
+  // Serial.println(goingDownButtonPressed); // remove after testing
 
   sendingData[0] = goingUpButtonPressed;
   sendingData[1] = goingDownButtonPressed; 
@@ -141,8 +141,8 @@ void sendButtonStatesGoingUpAndDown() {
 
 void checkLiftArrived() {
   liftArrived = digitalRead(IR_PIN);
-//  Serial.print("liftArrived: ");
-//  Serial.println(liftArrived);
+  // Serial.print("liftArrived: ");
+  // Serial.println(liftArrived);
   liftArrived = !liftArrived; // because output is false if object arrived
 
   sendingData[2] = liftArrived;
@@ -155,10 +155,10 @@ void keepReadingButtonUpAndDownUntilPressed() {
   if (!goingDownButtonPressed) {
     goingDownButtonPressed = digitalRead(BUTTON_DOWN_PIN);
   }
-  Serial.print("goingUpButtonPressed: ");
-  Serial.println(goingUpButtonPressed);
-  Serial.print("goingDownButtonPressed: ");
-  Serial.println(goingDownButtonPressed);
+  // Serial.print("goingUpButtonPressed: ");
+  // Serial.println(goingUpButtonPressed);
+  // Serial.print("goingDownButtonPressed: ");
+  // Serial.println(goingDownButtonPressed);
 }
 
 void handleDoorAndResetFloorButtons() {
@@ -169,12 +169,11 @@ void handleDoorAndResetFloorButtons() {
   } else {
     digitalWrite(DOOR_LED_PIN, LOW);
   }
-  Serial.print("openDoor: ");
-  Serial.println(openDoor);
+  // Serial.print("openDoor: ");
+  // Serial.println(openDoor);
 }
 
 void resetFloorButtons() {
-  Serial.println("floor buttons reset");
   goingUpButtonPressed = 0;
   goingDownButtonPressed = 0;
 }
