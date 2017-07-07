@@ -15,6 +15,7 @@ const int CONNECTED_SLAVES = 2;
 int floorButtonUp[CONNECTED_SLAVES];
 int floorButtonDown[CONNECTED_SLAVES];
 boolean doorOpen[CONNECTED_SLAVES];           // If Door on floor is open, also reset floor get lift buttons
+boolean liftArrived[CONNECTED_SLAVES];
 
 int currentFloor = 0;
 
