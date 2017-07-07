@@ -14,8 +14,8 @@ boolean clockwise = true;
 const int CONNECTED_SLAVES = 2;
 int floorButtonUp[CONNECTED_SLAVES];
 int floorButtonDown[CONNECTED_SLAVES];
-boolean doorOpen[CONNECTED_SLAVES];           // If Door on floor is open, also reset floor get lift buttons
-boolean liftArrived[CONNECTED_SLAVES];
+boolean doorOpen[CONNECTED_SLAVES];           // If Door on floor should open, also reset floor get lift buttons
+boolean liftAvailable[CONNECTED_SLAVES];
 
 int currentFloor = 0;
 
@@ -39,6 +39,9 @@ void setup() {
   // this data is send to the slaves, so set to false first
   for (int i = 0; i < CONNECTED_SLAVES; i++) {
     doorOpen[i] = false;
+    liftAvailable[i] = false;
+    floorButtonUp[i] = 0;
+    floorButtonDown[i] = 0;
   }
 }
 
@@ -64,11 +67,10 @@ void getAndSendDataToAllFloors() {
     Serial.print("getAndSend to slave ");
     Serial.println(i);
     Serial.println("GetButtonPressedOfFloor");
-    if(getButtonPressedOfFloor(i)){ // De delay mogelijk verwijderen om de motor
-      Serial.println("Great success!");
-    }else{
+    if(!getButtonPressedOfFloor(i)){ 
       Serial.println("Failed");
     }
+    // De delay mogelijk verwijderen om de motor
     // nog soepeler te laten lopen, of the for loop in tunrMotorOnRequest verlengen
     delay(5);
     Serial.println("sendLiftRelatedData");
@@ -116,9 +118,9 @@ boolean getButtonPressedOfFloor(int floorIndex) {
     Serial.println("Reading the wire");
     floorButtonUp[floorIndex-8] = Wire.read();
     floorButtonDown[floorIndex-8] = Wire.read();
-    boolean liftArrived = Wire.read();
+    liftAvailable[floorIndex-8] = Wire.read();
 
-    if(liftArrived){
+    if(liftAvailable[floorIndex-8]){
       currentFloor = (floorIndex-8);
     }
     
@@ -127,7 +129,7 @@ boolean getButtonPressedOfFloor(int floorIndex) {
     Serial.print(" and button down ");
     Serial.print(floorButtonDown[floorIndex-8]);
     Serial.print(" and ir data ");
-    Serial.print(liftArrived);
+    Serial.print(liftAvailable[floorIndex-8]);
     Serial.print(" from slave ");
     Serial.println(floorIndex);
     return true;
@@ -151,7 +153,7 @@ void debugArray() {
 }
 
 void checkForMoveLift() {
-  if ((floorButtonDown[currentFloor] || floorButtonUp[currentFloor])) {
+  if ((floorButtonDown[currentFloor] || floorButtonUp[currentFloor]) && liftAvailable[currentFloor]) {
     moveUp = false;
     moveDown = false;
     doorOpen[currentFloor] = true;
