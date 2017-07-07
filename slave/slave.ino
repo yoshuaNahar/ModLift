@@ -27,7 +27,7 @@ const int IR_PIN = 13;
 int liftArrived = 0;      // false
 
 // For displaying lift position on LED display
-int liftPosition = -1;
+int liftPosition = 0;
 
 // For receiving command for save to open door
 int openDoor = 0;
@@ -59,6 +59,8 @@ void setup() {
 
   // For initialization
   int address = determineAddress();
+  Serial.print("address: ");
+  Serial.println(address);
 
   // For communication
   Wire.begin(address + 8); // https://www.arduino.cc/en/Reference/Wire inside NOTE: addresses should start from 8 
@@ -88,9 +90,12 @@ void getLiftRelatedData(int numBytes) {
 }
 
 void sendDataToMaster() {
+  Serial.println("Request received from master");
+  Serial.println("Checking button state" );
   sendButtonStatesGoingUpAndDown();
+  Serial.println("Checking lift arrival");
   checkLiftArrived();
-
+  
   Wire.write(sendingData, 3);
 }
 
@@ -105,6 +110,8 @@ void sendButtonStatesGoingUpAndDown() {
 
 void checkLiftArrived() {
   liftArrived = digitalRead(IR_PIN);
+  Serial.print("liftArrived: ");
+  Serial.println(liftArrived);
   liftArrived = !liftArrived; // because output is false if object arrived
 
   sendingData[2] = liftArrived;
@@ -124,7 +131,6 @@ int determineAddress() {
   while (true) {
     Serial.print("selectedFloor: ");
     Serial.println(selectingFloor);
-    ledDisplayHandler(selectingFloor);
     keepReadingButtonUpAndDownUntilPressed();
     if (goingUpButtonPressed) {
       Serial.println("goingUpButtonPressed");
@@ -134,8 +140,11 @@ int determineAddress() {
         selectingFloor = 0;
       }
     }
+    ledDisplayHandler(selectingFloor);
     if (goingDownButtonPressed) {
       Serial.println("Floor selected (goingDownButtonPressed)");
+      turnOff();
+      delay(2000);
       goingDownButtonPressed = 0;
       return selectingFloor;
     }
@@ -146,10 +155,10 @@ int determineAddress() {
 /*********************** NON I2C CODE ***********************/
 
 void keepReadingButtonUpAndDownUntilPressed() {
-  if (goingUpButtonPressed == 0) {
+  if (!goingUpButtonPressed) {
     goingUpButtonPressed = digitalRead(BUTTON_UP_PIN);
   }
-  if (goingDownButtonPressed == 0) {
+  if (!goingDownButtonPressed) {
     goingDownButtonPressed = digitalRead(BUTTON_DOWN_PIN);
   }
   Serial.print("goingUpButtonPressed: ");
