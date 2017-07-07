@@ -36,7 +36,7 @@ void setup() {
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
 
-  // why does this only happen for doorOpen and not floorButtonUp and floorButtonDown
+  // this data is send to the slaves, so set to false first
   for (int i = 0; i < CONNECTED_SLAVES; i++) {
     doorOpen[i] = false;
   }
@@ -51,6 +51,7 @@ void loop() {
   checkForMoveLift();
   Serial.println("moveLift");
   moveLift();
+  Serial.println(currentFloor);
   delay(100);
   //Serial.println("End of loop");
 }
@@ -60,9 +61,17 @@ void loop() {
 void getAndSendDataToAllFloors() {
   for (int i = 8; i < CONNECTED_SLAVES + 8; i++) { // https://www.arduino.cc/en/Reference/Wire inside NOTE: addresses should start from 8 
     //readSerialAndSendLiftRelatedData(i); // testing code
-    getButtonPressedOfFloor(i); // De delay mogelijk verwijderen om de motor
+    Serial.print("getAndSend to slave ");
+    Serial.println(i);
+    Serial.println("GetButtonPressedOfFloor");
+    if(getButtonPressedOfFloor(i)){ // De delay mogelijk verwijderen om de motor
+      Serial.println("Great success!");
+    }else{
+      Serial.println("Failed");
+    }
     // nog soepeler te laten lopen, of the for loop in tunrMotorOnRequest verlengen
     delay(5);
+    Serial.println("sendLiftRelatedData");
     sendLiftRelatedData(i);
   }
 }
@@ -96,24 +105,34 @@ void sendLiftRelatedData(int floorIndex) {
   Wire.endTransmission();
 }
 
-void getButtonPressedOfFloor(int floorIndex) {
+boolean getButtonPressedOfFloor(int floorIndex) {
+  Serial.println("Begin request");
   Wire.requestFrom(floorIndex, 3);
+  Serial.println("End request");
   delay(10);
 
+  Serial.println("Availibility check");
   if (Wire.available()) {
+    Serial.println("Reading the wire");
     floorButtonUp[floorIndex-8] = Wire.read();
     floorButtonDown[floorIndex-8] = Wire.read();
-    liftArrived[floorIndex-8] = Wire.read();
+    boolean liftArrived = Wire.read();
+
+    if(liftArrived){
+      currentFloor = (floorIndex-8);
+    }
     
     Serial.print("Button up ");
     Serial.print(floorButtonUp[floorIndex-8]);
     Serial.print(" and button down ");
     Serial.print(floorButtonDown[floorIndex-8]);
     Serial.print(" and ir data ");
-    Serial.print(liftArrived[floorIndex-8]);
+    Serial.print(liftArrived);
     Serial.print(" from slave ");
     Serial.println(floorIndex);
+    return true;
   }
+  return false;
 }
 
 /*********************** NON I2C CODE ***********************/
@@ -132,7 +151,7 @@ void debugArray() {
 }
 
 void checkForMoveLift() {
-  if ((floorButtonDown[currentFloor] || floorButtonUp[currentFloor]) && liftArrived[currentFloor]) {
+  if ((floorButtonDown[currentFloor] || floorButtonUp[currentFloor])) {
     moveUp = false;
     moveDown = false;
     doorOpen[currentFloor] = true;
