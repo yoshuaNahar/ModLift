@@ -27,7 +27,7 @@ const int IR_PIN = 13;
 int liftArrived = 0;      // false
 
 // For displaying lift position on LED display
-int liftPosition = -1;
+int liftPosition = 0;
 
 // For receiving command for save to open door
 int openDoor = 0;
@@ -59,6 +59,8 @@ void setup() {
 
   // For initialization
   int address = determineAddress();
+  Serial.print("address: ");
+  Serial.println(address);
 
   // For communication
   Wire.begin(address + 8); // https://www.arduino.cc/en/Reference/Wire inside NOTE: addresses should start from 8 
@@ -68,9 +70,10 @@ void setup() {
 
 void loop() {
   keepReadingButtonUpAndDownUntilPressed(); // constantly read BUTTON_UP and DOWN until pressed
-
+  setSendingDataArray(); // fill sending data array, so that wire function is clean!!!
   handleDoorAndResetFloorButtons();         // turn led on or off if openDoor = true
                                             // also reset lift buttons, because lift already arrived
+  ledDisplayHandler(liftPosition);
 }
 
 /*********************** I2C CODE ***********************/
@@ -80,41 +83,13 @@ void getLiftRelatedData(int numBytes) {
   liftPosition = Wire.read();           // receive bit for lift as an integer
   openDoor = Wire.read();               // receive bit for floor door
 
-  Serial.println(liftPosition);  // remove after testing
-  Serial.print("If openDoor = 1 LED ON + Reset floor button");
-  Serial.println(openDoor);  // remove after testing
-
-  ledDisplayHandler(liftPosition);         // show lift current location
+//  Serial.println(liftPosition);  // remove after testing
+// Serial.print("If openDoor = 1 LED ON + Reset floor button");
+//  Serial.println(openDoor);  // remove after testing
 }
 
 void sendDataToMaster() {
-  sendButtonStatesGoingUpAndDown();
-  checkLiftArrived();
-
   Wire.write(sendingData, 3);
-}
-
-// Send that I pressed the request lift button
-void sendButtonStatesGoingUpAndDown() {
-  Serial.println(goingUpButtonPressed);   // remove after testing
-  Serial.println(goingDownButtonPressed); // remove after testing
-
-  sendingData[0] = goingUpButtonPressed;
-  sendingData[1] = goingDownButtonPressed; 
-}
-
-void checkLiftArrived() {
-  liftArrived = digitalRead(IR_PIN);
-  liftArrived = !liftArrived; // because output is false if object arrived
-
-  sendingData[2] = liftArrived;
-
-  // remove after testing
-  if (liftArrived) {
-    Serial.println("clear, no lift arrived");
-  } else {
-    Serial.println("OBSTACLE aka LIFT Arrived");
-  }
 }
 
 /*********************** INITIALIZE LIFT CODE ***********************/
@@ -124,7 +99,6 @@ int determineAddress() {
   while (true) {
     Serial.print("selectedFloor: ");
     Serial.println(selectingFloor);
-    ledDisplayHandler(selectingFloor);
     keepReadingButtonUpAndDownUntilPressed();
     if (goingUpButtonPressed) {
       Serial.println("goingUpButtonPressed");
@@ -134,8 +108,11 @@ int determineAddress() {
         selectingFloor = 0;
       }
     }
+    ledDisplayHandler(selectingFloor);
     if (goingDownButtonPressed) {
       Serial.println("Floor selected (goingDownButtonPressed)");
+      turnOff();
+      delay(2000);
       goingDownButtonPressed = 0;
       return selectingFloor;
     }
@@ -145,11 +122,37 @@ int determineAddress() {
 
 /*********************** NON I2C CODE ***********************/
 
+void setSendingDataArray() {
+  //  Serial.println("Request received from master");
+//  Serial.println("Checking button state" );
+  sendButtonStatesGoingUpAndDown();
+  //  Serial.println("Checking lift arrival");
+  checkLiftArrived();
+}
+
+// Send that I pressed the request lift button
+void sendButtonStatesGoingUpAndDown() {
+//  Serial.println(goingUpButtonPressed);   // remove after testing
+//  Serial.println(goingDownButtonPressed); // remove after testing
+
+  sendingData[0] = goingUpButtonPressed;
+  sendingData[1] = goingDownButtonPressed; 
+}
+
+void checkLiftArrived() {
+  liftArrived = digitalRead(IR_PIN);
+//  Serial.print("liftArrived: ");
+//  Serial.println(liftArrived);
+  liftArrived = !liftArrived; // because output is false if object arrived
+
+  sendingData[2] = liftArrived;
+}
+
 void keepReadingButtonUpAndDownUntilPressed() {
-  if (goingUpButtonPressed == 0) {
+  if (!goingUpButtonPressed) {
     goingUpButtonPressed = digitalRead(BUTTON_UP_PIN);
   }
-  if (goingDownButtonPressed == 0) {
+  if (!goingDownButtonPressed) {
     goingDownButtonPressed = digitalRead(BUTTON_DOWN_PIN);
   }
   Serial.print("goingUpButtonPressed: ");
