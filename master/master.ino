@@ -94,6 +94,7 @@ void loop() {
   getAndSendDataToAllFloors();
   Serial.println("Reading elevator buttons");
   readButtons();
+  handleLedButton();
   Serial.println("debugArray");
   debugArray();
   Serial.println("checkForMoveLift");
@@ -102,7 +103,6 @@ void loop() {
   moveLift();
   Serial.println(currentFloor);
   ledDisplayHandler(currentFloor);
-  handleLedButton();
   delay(100);
   //Serial.println("End of loop");
 }
@@ -260,21 +260,23 @@ void handleLedButton(){
 
 void checkForMoveLift() {
   Serial.print("Check to see if current floor wants to use lift: ");
-  if ((floorButtonDown[currentFloor] || floorButtonUp[currentFloor]) && liftAvailable[currentFloor]) {  // if current floor has a button pressed and lift is available
-    if (movingUp && floorButtonUp[currentFloor]) {
+  if ((floorButtonDown[currentFloor] || floorButtonUp[currentFloor] || floorButtonElevator[currentFloor]) && liftAvailable[currentFloor]) {  // if current floor has a button pressed and lift is available
+    if (movingUp && (floorButtonUp[currentFloor] || floorButtonElevator[currentFloor])) {
       // if lift is moving up and floorUp is pressed, stop at current floor
       moveUp = false;
       moveDown = false;
       doorOpen[currentFloor] = true;
+      floorButtonElevator[currentFloor] = false;
       Serial.println("Current floor wants to use lift");
 
       delay(3000); // testing if needed
       return;
-    } else if (!movingUp && floorButtonDown[currentFloor]) {
+    } else if (!movingUp && (floorButtonDown[currentFloor] || floorButtonElevator[currentFloor])) {
       // if lift is moving down and floorDown is pressed, stop at current floor
       moveUp = false;
       moveDown = false;
       doorOpen[currentFloor] = true;
+      floorButtonElevator[currentFloor] = false;
       Serial.println("Current floor wants to use lift");
 
       delay(3000); // testing if needed
@@ -283,7 +285,7 @@ void checkForMoveLift() {
       // if lift is moving up and buttonDown is pressed and there are no buttons pressed above me, stop at current floor
       boolean stopHere = true;
       for(int i = currentFloor + 1; i < (sizeof(floorButtonUp)/sizeof(int)); i++){
-        if (floorButtonUp[i] || floorButtonDown[i]){
+        if (floorButtonUp[i] || floorButtonDown[i] || floorButtonElevator[i]){
           stopHere = false;
           break;
         }
@@ -293,6 +295,7 @@ void checkForMoveLift() {
         moveUp = false;
         moveDown = false;
         doorOpen[currentFloor] = true;
+        floorButtonElevator[currentFloor] = false;
         Serial.println("Current floor wants to use lift");
         delay(3000);
         return;
@@ -301,7 +304,7 @@ void checkForMoveLift() {
       // if lift is moving down and buttonUp is pressed and there are no buttons pressed below me, stop at current floor
       boolean stopHere = true;
       for(int i = currentFloor - 1; i >= 0; i--){
-        if (floorButtonUp[i] || floorButtonDown[i]){
+        if (floorButtonUp[i] || floorButtonDown[i] || floorButtonElevator[i]){
           stopHere = false;
           break;
         }
@@ -311,6 +314,7 @@ void checkForMoveLift() {
         moveUp = false;
         moveDown = false;
         doorOpen[currentFloor] = true;
+        floorButtonElevator[currentFloor] = false;
         Serial.println("Current floor wants to use lift");
         delay(3000);
         return;
@@ -327,7 +331,7 @@ void checkForMoveLift() {
   if (movingUp) {
     // check floors above current floor to see if anyone wants to go up
     for(int i = currentFloor; i < (sizeof(floorButtonUp)/sizeof(int)); i++) {  // sizeof(int) used bacause arduino is a bitch https://www.arduino.cc/en/Reference/Sizeof
-      if (floorButtonUp[i] == 1) {
+      if (floorButtonUp[i] || floorButtonElevator[i]) {
         Serial.println("A floor above me wants to go up");
         moveUp = true;
         moveDown = false;
@@ -337,7 +341,7 @@ void checkForMoveLift() {
     }
     // check floors above current floor to see if anyone wants to go down
     for(int i = currentFloor; i < (sizeof(floorButtonDown)/sizeof(int)); i++) {
-      if (floorButtonDown[i] == 1) {
+      if (floorButtonDown[i] || floorButtonElevator[i]) {
         Serial.println("A floor above me wants to go down");
         moveUp = true;
         moveDown = false;
@@ -347,7 +351,7 @@ void checkForMoveLift() {
     }
     // check floor below current floor to see if anyone wants to go down
     for(int i = currentFloor; i >= 0; i--) {
-      if (floorButtonDown[i] == 1) {
+      if (floorButtonDown[i] || floorButtonElevator[i]) {
         Serial.println("A floor below me wants to go up");
         moveUp = false;
         moveDown = true;
@@ -357,7 +361,7 @@ void checkForMoveLift() {
     }
     // check floors below current floor to see if anyone wants to go up
     for(int i = currentFloor; i >= 0; i--) {
-      if (floorButtonUp[i] == 1) {
+      if (floorButtonUp[i] || floorButtonElevator[i]) {
         Serial.println("A floor below me wants to go down");
         moveUp = false;
         moveDown = true;
@@ -370,7 +374,7 @@ void checkForMoveLift() {
     
     // check floors below current floor to see if anyone wants to go up
     for(int i = currentFloor; i >= 0; i--) {
-      if (floorButtonUp[i] == 1) {
+      if (floorButtonUp[i] || floorButtonElevator[i]) {
         Serial.println("A floor below me wants to go up");
         moveUp = false;
         moveDown = true;
@@ -380,7 +384,7 @@ void checkForMoveLift() {
     }
     // check floor below current floor to see if anyone wants to go down
     for (int i = currentFloor; i >= 0; i--) {
-      if (floorButtonDown[i] == 1) {
+      if (floorButtonDown[i] || floorButtonElevator[i]) {
         Serial.println("A floor below me wants to go down");
         moveUp = false;
         moveDown = true;
@@ -390,7 +394,7 @@ void checkForMoveLift() {
     }
     // check floors above current floor to see if anyone wants to go down
     for (int i = currentFloor; i < (sizeof(floorButtonDown)/sizeof(int)); i++) {
-      if (floorButtonDown[i] == 1) {
+      if (floorButtonDown[i] || floorButtonElevator[i]) {
         Serial.println("A floor above me wants to go down");
         moveUp = true;
         moveDown = false;
@@ -400,7 +404,7 @@ void checkForMoveLift() {
     }
     // check floors above current floor to see if anyone wants to go up
     for (int i = currentFloor; i < (sizeof(floorButtonUp)/sizeof(int)); i++) {
-      if (floorButtonUp[i] == 1) {
+      if (floorButtonUp[i] || floorButtonElevator[i]) {
         Serial.println("A floor above me wants to go up");
         moveUp = true;
         moveDown = false;
@@ -427,6 +431,10 @@ void moveLift() {
 void liftController(boolean up) {
   clockwise = !up;
 
+  if(floorButtonElevator[5]){
+    return;
+  }
+  
   for (int i = 0; i < 1000; i++) { // remove or increase when needed,
     // with this for loop the motor moves more between requests.
     stepper();
