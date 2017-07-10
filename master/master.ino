@@ -1,13 +1,13 @@
 #include<Wire.h>
 
 // setup display
-#define A 22// For displaying segment "A"
-#define B 24 // For displaying segment "B"
-#define C 26 // For displaying segment "C"
+#define A 34// For displaying segment "A"
+#define B 32 // For displaying segment "B"
+#define C 30 // For displaying segment "C"
 #define D 28 // For displaying segment "D"
-#define E 30 // For displaying segment "E"
-#define F 32 // For displaying segment "F"
-#define G 34 // For displaying segment "G"
+#define E 26 // For displaying segment "E"
+#define F 24 // For displaying segment "F"
+#define G 22 // For displaying segment "G"
 
 // Setup stepper
 #define IN1 8
@@ -19,10 +19,28 @@
 int steps = 0;
 boolean clockwise = true;
 
+// setup buttons
+#define BUTTON1 53
+#define BUTTON2 51
+#define BUTTON3 49
+#define BUTTON4 47
+#define BUTTON5 45
+#define BUTTON6 43
+
+// setup button led
+
+#define LED_BUTTON1 52
+#define LED_BUTTON2 50
+#define LED_BUTTON3 48
+#define LED_BUTTON4 46
+#define LED_BUTTON5 44
+#define LED_BUTTON6 42
+
 // For I2C and lift
 const int CONNECTED_SLAVES = 5;
 int floorButtonUp[CONNECTED_SLAVES];
 int floorButtonDown[CONNECTED_SLAVES];
+int floorButtonElevator[6] = {0,0,0,0,0,0};
 boolean doorOpen[CONNECTED_SLAVES];           // If Door on floor should open, also reset floor get lift buttons
 boolean liftAvailable[CONNECTED_SLAVES];
 
@@ -54,6 +72,14 @@ void setup() {
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
 
+  // setup buttons
+  pinMode(BUTTON1, INPUT);
+  pinMode(BUTTON2, INPUT);
+  pinMode(BUTTON3, INPUT);
+  pinMode(BUTTON4, INPUT);
+  pinMode(BUTTON5, INPUT);
+  pinMode(BUTTON6, INPUT);
+
   // this data is send to the slaves, so set to false first
   for (int i = 0; i < CONNECTED_SLAVES; i++) {
     doorOpen[i] = false;
@@ -66,6 +92,8 @@ void setup() {
 void loop() {
   Serial.println("getAndSendDataToAllFloors");
   getAndSendDataToAllFloors();
+  Serial.println("Reading elevator buttons");
+  readButtons();
   Serial.println("debugArray");
   debugArray();
   Serial.println("checkForMoveLift");
@@ -74,6 +102,7 @@ void loop() {
   moveLift();
   Serial.println(currentFloor);
   ledDisplayHandler(currentFloor);
+  handleLedButton();
   delay(100);
   //Serial.println("End of loop");
 }
@@ -168,6 +197,64 @@ void debugArray() {
   Serial.println("Floor button down");
   for (int i = 0; i < (sizeof(floorButtonDown)/sizeof(int)); i++) {
     Serial.println(floorButtonDown[i]);
+  }
+  Serial.println("Elevator button");
+  for (int i = 0; i < 6; i++) {
+    Serial.println(floorButtonElevator[i]);
+  }
+}
+
+void readButtons(){
+  if (!floorButtonElevator[0]){
+    floorButtonElevator[0] = digitalRead(BUTTON1);
+  }
+  if (!floorButtonElevator[1]){
+    floorButtonElevator[1] = digitalRead(BUTTON2);
+  }
+  if (!floorButtonElevator[2]){
+    floorButtonElevator[2] = digitalRead(BUTTON3);
+  }
+  if (!floorButtonElevator[3]){
+    floorButtonElevator[3] = digitalRead(BUTTON4);
+  }
+  if (!floorButtonElevator[4]){
+    floorButtonElevator[4] = digitalRead(BUTTON5);
+  }
+  if (!floorButtonElevator[5]){
+    floorButtonElevator[5] = digitalRead(BUTTON6);
+  }
+}
+
+void handleLedButton(){
+  if (floorButtonElevator[0]){
+    digitalWrite(LED_BUTTON1, HIGH);
+  } else {
+    digitalWrite(LED_BUTTON1, LOW);
+  }
+  if (floorButtonElevator[1]){
+    digitalWrite(LED_BUTTON2, HIGH);
+  } else {
+    digitalWrite(LED_BUTTON2, LOW);
+  }
+  if (floorButtonElevator[2]){
+    digitalWrite(LED_BUTTON3, HIGH);
+  } else {
+    digitalWrite(LED_BUTTON3, LOW);
+  }
+  if (floorButtonElevator[3]){
+    digitalWrite(LED_BUTTON4, HIGH);
+  } else {
+    digitalWrite(LED_BUTTON4, LOW);
+  }
+  if (floorButtonElevator[4]){
+    digitalWrite(LED_BUTTON5, HIGH);
+  } else {
+    digitalWrite(LED_BUTTON5, LOW);
+  }
+  if (floorButtonElevator[5]){
+    digitalWrite(LED_BUTTON6, HIGH);
+  } else {
+    digitalWrite(LED_BUTTON6, LOW);
   }
 }
 
