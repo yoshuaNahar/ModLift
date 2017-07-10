@@ -1,5 +1,14 @@
 #include<Wire.h>
 
+// setup display
+#define A 22// For displaying segment "A"
+#define B 24 // For displaying segment "B"
+#define C 26 // For displaying segment "C"
+#define D 28 // For displaying segment "D"
+#define E 30 // For displaying segment "E"
+#define F 32 // For displaying segment "F"
+#define G 34 // For displaying segment "G"
+
 // Setup stepper
 #define IN1 8
 #define IN2 9
@@ -30,6 +39,15 @@ void setup() {
 
   Wire.begin();
 
+  // For led display segments
+  pinMode(A, OUTPUT);
+  pinMode(B, OUTPUT);
+  pinMode(C, OUTPUT);
+  pinMode(D, OUTPUT);
+  pinMode(E, OUTPUT);
+  pinMode(F, OUTPUT);
+  pinMode(G, OUTPUT);
+
   // Setup stepper
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
@@ -55,6 +73,7 @@ void loop() {
   Serial.println("moveLift");
   moveLift();
   Serial.println(currentFloor);
+  ledDisplayHandler(currentFloor);
   delay(100);
   //Serial.println("End of loop");
 }
@@ -376,4 +395,56 @@ void stepper() {
     steps = 3;
   }
 }
+
+void ledDisplayHandler(int x) {
+  if (x >= 0 && x <= 9) {
+    turnOff();
+    displayDigit(x); 
+  }
+}
+
+// Bekijk deze link om te zien welke letters gekoppeld
+// zijn aan de led segmenten:
+// https://cdn.instructables.com/ORIG/FA0/S3TG/GZUAG6G2/FA0S3TGGZUAG6G2.gif
+void displayDigit(int digit) {
+  // Conditions for displaying segment A
+  if(digit != 1 && digit != 4) {
+    digitalWrite(A, HIGH);
+  }
+  // Conditions for displaying segment B
+  if(digit != 5 && digit != 6) {
+    digitalWrite(B, HIGH);
+  }
+  // Conditions for displaying segment C
+  if(digit != 2) {
+    digitalWrite(C, HIGH);
+  }
+  // Conditions for displaying segment D
+  if(digit != 1 && digit != 4 && digit != 7) {
+    digitalWrite(D, HIGH);
+  } 
+  // Conditions for displaying segment E 
+  if(digit == 2 || digit == 6 || digit == 8 || digit == 0) {
+    digitalWrite(E, HIGH);
+  }
+  // Conditions for displaying segment F
+  if(digit != 1 && digit != 2 && digit != 3 && digit != 7) {
+    digitalWrite(F, HIGH);
+  }
+  // Conditions for displaying segment G
+  if (digit != 0 && digit != 1 && digit != 7) {
+    digitalWrite(G, HIGH);
+  }
+}
+
+void turnOff() {
+  digitalWrite(A, LOW);
+  digitalWrite(B, LOW);
+  digitalWrite(C, LOW);
+  digitalWrite(D, LOW);
+  digitalWrite(E, LOW);
+  digitalWrite(F, LOW);
+  digitalWrite(G, LOW);
+}
+
 
