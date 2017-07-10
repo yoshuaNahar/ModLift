@@ -20,7 +20,7 @@ int steps = 0;
 boolean clockwise = true;
 
 // For I2C and lift
-const int CONNECTED_SLAVES = 3;
+const int CONNECTED_SLAVES = 5;
 int floorButtonUp[CONNECTED_SLAVES];
 int floorButtonDown[CONNECTED_SLAVES];
 boolean doorOpen[CONNECTED_SLAVES];           // If Door on floor should open, also reset floor get lift buttons
@@ -340,7 +340,7 @@ void moveLift() {
 void liftController(boolean up) {
   clockwise = !up;
 
-  for (int i = 0; i < 500; i++) { // remove or increase when needed,
+  for (int i = 0; i < 1000; i++) { // remove or increase when needed,
     // with this for loop the motor moves more between requests.
     stepper();
     delayMicroseconds(2000);
