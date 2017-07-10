@@ -50,6 +50,7 @@ void setup() {
   pinMode(E, OUTPUT);
   pinMode(F, OUTPUT);
   pinMode(G, OUTPUT);
+  pinMode(DP, OUTPUT);
 
   // For get lift
   pinMode(BUTTON_UP_PIN, INPUT);
@@ -108,6 +109,7 @@ void sendDataToMaster() {
 int determineAddress() {
   int selectingFloor = 0;
   ledDisplayHandler(selectingFloor);
+  digitalWrite(DP, HIGH);
   while (true) {
     if (DEBUG_MODE) {
       Serial.print("selectedFloor: ");
@@ -124,6 +126,7 @@ int determineAddress() {
         selectingFloor = 0;
       }
       ledDisplayHandler(selectingFloor);
+      digitalWrite(DP, HIGH);
     } 
     else if (goingDownButtonPressed) {
       if (DEBUG_MODE) {
@@ -132,6 +135,7 @@ int determineAddress() {
       turnOff();
       delay(2000);
       goingDownButtonPressed = 0;
+      digitalWrite(DP, LOW);
       return selectingFloor;
     }
     delay(1000);
@@ -267,6 +271,7 @@ void turnOff() {
   digitalWrite(E, LOW);
   digitalWrite(F, LOW);
   digitalWrite(G, LOW);
+  digitalWrite(DP, LOW);
 }
 
 
