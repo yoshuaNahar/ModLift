@@ -37,25 +37,23 @@ boolean clockwise = true;
 #define LED_BUTTON6 42
 
 // For I2C and lift
-const int CONNECTED_SLAVES = 5;
-int floorButtonUp[CONNECTED_SLAVES];
-int floorButtonDown[CONNECTED_SLAVES];
-int floorButtonElevator[6] = {0,0,0,0,0,0};
+const int CONNECTED_SLAVES = 5;               // Amount of slaves attached
+int floorButtonUp[CONNECTED_SLAVES];          // Array containing button information from the slaves
+int floorButtonDown[CONNECTED_SLAVES];        // Array containing button information from the slaves
+int floorButtonElevator[6] = {0,0,0,0,0,0};   // Array containing button information from the master
 boolean doorOpen[CONNECTED_SLAVES];           // If Door on floor should open, also reset floor get lift buttons
-boolean liftAvailable[CONNECTED_SLAVES];
+boolean liftAvailable[CONNECTED_SLAVES];      // Array containing which IR-modules are currently triggered
 
-int currentFloor = 0;
+int currentFloor = 0;                         // Current location of the elevator
 
-// de moveUp en moveDown is toch eigenlijk niet nodig? Er zijn maar 2 variablen nodig,
-// moet de lift bewegen en welke richting
 boolean movingUp = true;                      // which direction the elevator is going
-boolean moveUp = false;                       // Should the moter move clockwise
+boolean moveUp = false;                       // Should the motor move clockwise
 boolean moveDown = false;                     // Should the motor move counter-clockwise
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(9600);                         // Begin serial communication
 
-  Wire.begin();
+  Wire.begin();                               // Begin I2C communication
 
   // For led display segments
   pinMode(A, OUTPUT);
@@ -91,18 +89,19 @@ void setup() {
 
 void loop() {
   Serial.println("getAndSendDataToAllFloors");
-  getAndSendDataToAllFloors();
+  getAndSendDataToAllFloors();                  // Retrieve which buttons are pressed and send the location of the elevator to the slaves
   Serial.println("Reading elevator buttons");
-  readButtons();
-  handleLedButton();
+  readButtons();                                // Read the buttons connected to the master
+  handleLedButton();                            // Turn the leds on the buttons on and off
   Serial.println("debugArray");
-  debugArray();
+  debugArray();                                 // Print contents of the arrays to the terminal for debugging purposes
   Serial.println("checkForMoveLift");
-  checkForMoveLift();
+  checkForMoveLift();                           // Check to see whether the elevator needs to move
   Serial.println("moveLift");
-  moveLift();
+  moveLift();                                   // Move the elevator to its destination
+  Serial.print("Current lift location is ");
   Serial.println(currentFloor);
-  ledDisplayHandler(currentFloor);
+  ledDisplayHandler(currentFloor);              // Change the display on the master
   delay(100);
   //Serial.println("End of loop");
 }
@@ -110,66 +109,70 @@ void loop() {
 /*********************** I2C CODE ***********************/
 
 void getAndSendDataToAllFloors() {
+  // For each of the connected slaves, request the currently pressed buttons and send where the elevator is and whether the door should open
   for (int i = 8; i < CONNECTED_SLAVES + 8; i++) { // https://www.arduino.cc/en/Reference/Wire inside NOTE: addresses should start from 8 
-    //readSerialAndSendLiftRelatedData(i); // testing code
     Serial.print("getAndSend to slave ");
     Serial.println(i);
     Serial.println("GetButtonPressedOfFloor");
-    if(!getButtonPressedOfFloor(i)){ 
+    if(!getButtonPressedOfFloor(i)){  // Requests the currently presseds buttons on a slave
       Serial.println("Failed");
     }
-    // De delay mogelijk verwijderen om de motor
-    // nog soepeler te laten lopen, of the for loop in tunrMotorOnRequest verlengen
+    
     delay(5);
     Serial.println("sendLiftRelatedData");
-    sendLiftRelatedData(i);
+    sendLiftRelatedData(i);   // Send current location and door status to the slaves
   }
 }
 
 void readSerialAndSendLiftRelatedData(int floorIndex) {
+  // Reads the terminal and sends the data to a slave, for debugging purposes only
   if (Serial.available()) {
-    String s = Serial.readString();
-    int currentFloor = s.substring(0, 1).toInt();
-    int openDoor = s.substring(1, 2).toInt();
+    String s = Serial.readString();                   // Read the serial terminal
+    int currentFloor = s.substring(0, 1).toInt();     // Get the first number
+    int openDoor = s.substring(1, 2).toInt();         // Get the second number
     Serial.print("Sending ");
     Serial.print(currentFloor);
     Serial.print(" and ");
     Serial.print(openDoor);
-    Wire.beginTransmission(floorIndex);
-    Wire.write(currentFloor);
-    Wire.write(openDoor);
-    Wire.endTransmission();
+    
+    Wire.beginTransmission(floorIndex);               // Begin transmitting to a slave
+    Wire.write(currentFloor);                         // Sends a byte containing the current location of the elevator
+    Wire.write(openDoor);                             // Sends a byte containing whether the door should open on that floor
+    Wire.endTransmission();                           // Stops transmitting to a slave
   }
 }
 
 void sendLiftRelatedData(int floorIndex) {
+  // Sends the current floor and whether the door should open to the slave
   Serial.print("Sending ");
   Serial.print(currentFloor);
   Serial.print(" and ");
   Serial.print(doorOpen[floorIndex-8]);
   Serial.print(" to slave ");
   Serial.println(floorIndex);
-  Wire.beginTransmission(floorIndex);
-  Wire.write(currentFloor);
-  Wire.write(doorOpen[floorIndex-8]);
-  Wire.endTransmission();
+  
+  Wire.beginTransmission(floorIndex);                 // Begin transmitting to a slave
+  Wire.write(currentFloor);                           // Sends a byte containing the current location of the elevator
+  Wire.write(doorOpen[floorIndex-8]);                 // Sends a byte containing whether the door should open on that floor
+  Wire.endTransmission();                             // Stops transmitting to a slave
 }
 
 boolean getButtonPressedOfFloor(int floorIndex) {
+  // Requests the button states from a slave
   Serial.println("Begin request");
-  Wire.requestFrom(floorIndex, 3);
+  Wire.requestFrom(floorIndex, 3);                    // Requests the slave to send 3 bytes of information
   Serial.println("End request");
-  delay(10);
+  delay(10);                                          // Small delay to make sure the entire message has been received
 
   Serial.println("Availibility check");
-  if (Wire.available()) {
+  if (Wire.available()) {                             // If there is an answer
     Serial.println("Reading the wire");
-    floorButtonUp[floorIndex-8] = Wire.read();
-    floorButtonDown[floorIndex-8] = Wire.read();
-    liftAvailable[floorIndex-8] = Wire.read();
+    floorButtonUp[floorIndex-8] = Wire.read();        // Read the first byte containing the button up state
+    floorButtonDown[floorIndex-8] = Wire.read();      // Read the second byte containing the button down state
+    liftAvailable[floorIndex-8] = Wire.read();        // Read the third byte containing the IR-module state
 
-    if(liftAvailable[floorIndex-8]){
-      currentFloor = (floorIndex-8);
+    if(liftAvailable[floorIndex-8]){                  // If the IR-module is triggered
+      currentFloor = (floorIndex-8);                  // Update currentFloor to this floor
     }
     
     Serial.print("Button up ");
@@ -188,6 +191,7 @@ boolean getButtonPressedOfFloor(int floorIndex) {
 /*********************** NON I2C CODE ***********************/
 
 void debugArray() {
+  // Prints all the arrays to the terminal for debugging purposes
   Serial.print("Array length is ");
   Serial.println(sizeof(floorButtonUp)/sizeof(int));
   Serial.println("Floor button up");
@@ -205,6 +209,7 @@ void debugArray() {
 }
 
 void readButtons(){
+  // Read all the buttons connected to the master
   if (!floorButtonElevator[0]){
     floorButtonElevator[0] = digitalRead(BUTTON1);
   }
@@ -226,6 +231,7 @@ void readButtons(){
 }
 
 void handleLedButton(){
+  // Turns on the led if the button is pressed, or turn it off when it isn't
   if (floorButtonElevator[0]){
     digitalWrite(LED_BUTTON1, HIGH);
   } else {
@@ -259,27 +265,28 @@ void handleLedButton(){
 }
 
 void checkForMoveLift() {
+  // Main algorithm to check to where the lift should move
   Serial.print("Check to see if current floor wants to use lift: ");
-  if ((floorButtonDown[currentFloor] || floorButtonUp[currentFloor] || floorButtonElevator[currentFloor]) && liftAvailable[currentFloor]) {  // if current floor has a button pressed and lift is available
+  if ((floorButtonDown[currentFloor] || floorButtonUp[currentFloor] || floorButtonElevator[currentFloor]) && liftAvailable[currentFloor]) {  // If there is a button pressed for the current floor and the lift is available
     if (movingUp && (floorButtonUp[currentFloor] || floorButtonElevator[currentFloor])) {
-      // if lift is moving up and floorUp is pressed, stop at current floor
+      // If lift is moving up and floorUp is pressed, stop at current floor
       moveUp = false;
       moveDown = false;
       doorOpen[currentFloor] = true;
       floorButtonElevator[currentFloor] = false;
       Serial.println("Current floor wants to use lift");
 
-      delay(3000); // testing if needed
+      delay(3000); // Might not be nessesary
       return;
     } else if (!movingUp && (floorButtonDown[currentFloor] || floorButtonElevator[currentFloor])) {
-      // if lift is moving down and floorDown is pressed, stop at current floor
+      // If lift is moving down and floorDown is pressed, stop at current floor
       moveUp = false;
       moveDown = false;
       doorOpen[currentFloor] = true;
       floorButtonElevator[currentFloor] = false;
       Serial.println("Current floor wants to use lift");
 
-      delay(3000); // testing if needed
+      delay(3000); // Might not be nessesary
       return;
     } else if (movingUp) {
       // if lift is moving up and buttonDown is pressed and there are no buttons pressed above me, stop at current floor
@@ -328,7 +335,7 @@ void checkForMoveLift() {
   }
 
   Serial.print("Check for other floor wants to use lift: ");
-  if (movingUp) {
+  if (movingUp) {   // When the lift is moving up
     // check floors above current floor to see if anyone wants to go up
     for(int i = currentFloor; i < (sizeof(floorButtonUp)/sizeof(int)); i++) {  // sizeof(int) used bacause arduino is a bitch https://www.arduino.cc/en/Reference/Sizeof
       if (floorButtonUp[i] || floorButtonElevator[i]) {
@@ -370,7 +377,7 @@ void checkForMoveLift() {
       }
     }
     Serial.println("Nothing wants to use lift");
-  } else if (!movingUp) {
+  } else if (!movingUp) {  // When the lift is moving down
     
     // check floors below current floor to see if anyone wants to go up
     for(int i = currentFloor; i >= 0; i--) {
@@ -419,6 +426,7 @@ void checkForMoveLift() {
 }
 
 void moveLift() {
+  // Controls the lift controller
   if (moveUp) {
     Serial.println("going up");
     liftController(true);
@@ -429,9 +437,10 @@ void moveLift() {
 }
 
 void liftController(boolean up) {
+  // Controls how many the stepping motor should rotate
   clockwise = !up;
 
-  if(floorButtonElevator[5]){
+  if(floorButtonElevator[5]){ //When the emergency button is pressed, stop moving the motor untill the arduino resets
     return;
   }
   
@@ -445,6 +454,7 @@ void liftController(boolean up) {
 // http://www.nmbtc.com/step-motors/engineering/full-half-and-microstepping/
 // Using two-phase fullstep
 void stepper() {
+  // controls the steppenmotor
   switch (steps) {
   case 0:
     digitalWrite(IN1, HIGH);
@@ -492,6 +502,7 @@ void stepper() {
 }
 
 void ledDisplayHandler(int x) {
+  // Shows a number on the led display
   if (x >= 0 && x <= 9) {
     turnOff();
     displayDigit(x); 
@@ -502,6 +513,7 @@ void ledDisplayHandler(int x) {
 // zijn aan de led segmenten:
 // https://cdn.instructables.com/ORIG/FA0/S3TG/GZUAG6G2/FA0S3TGGZUAG6G2.gif
 void displayDigit(int digit) {
+  // Shows a specific digit on the led display
   // Conditions for displaying segment A
   if(digit != 1 && digit != 4) {
     digitalWrite(A, HIGH);
@@ -533,6 +545,7 @@ void displayDigit(int digit) {
 }
 
 void turnOff() {
+  // Turns the led display off
   digitalWrite(A, LOW);
   digitalWrite(B, LOW);
   digitalWrite(C, LOW);
