@@ -10,7 +10,7 @@
 #define DP 6 // For displaying segment "."
 
 // Set debug mode with Serial
-const boolean DEBUG_MODE = false;
+const boolean DEBUG_MODE = true;
 
 // For buttons to request the lift
 const int BUTTON_UP_PIN = 11;
@@ -100,6 +100,7 @@ void sendDataToMaster() {
 
 int determineAddress() {
   int selectingFloor = 0;
+  ledDisplayHandler(selectingFloor);
   while (true) {
     if (DEBUG_MODE) {
       Serial.print("selectedFloor: ");
@@ -154,8 +155,8 @@ void sendButtonStatesGoingUpAndDown() {
 void checkLiftArrived() {
   liftArrived = digitalRead(IR_PIN);
 
-  // Serial.print("liftArrived: ");
-  // Serial.println(liftArrived);
+   //Serial.print("liftArrived: ");
+   //Serial.println(liftArrived);
 
   liftArrived = !liftArrived; // because output is false if object arrived
 

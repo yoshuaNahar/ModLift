@@ -11,7 +11,7 @@ int steps = 0;
 boolean clockwise = true;
 
 // For I2C and lift
-const int CONNECTED_SLAVES = 2;
+const int CONNECTED_SLAVES = 3;
 int floorButtonUp[CONNECTED_SLAVES];
 int floorButtonDown[CONNECTED_SLAVES];
 boolean doorOpen[CONNECTED_SLAVES];           // If Door on floor should open, also reset floor get lift buttons
