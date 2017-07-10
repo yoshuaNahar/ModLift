@@ -15,6 +15,8 @@ const boolean DEBUG_MODE = true;
 // For buttons to request the lift
 const int BUTTON_UP_PIN = 11;
 const int BUTTON_DOWN_PIN = 12;
+const int BUTTON_UP_LED_PIN = A2;
+const int BUTTON_DOWN_LED_PIN = A1;
 int goingUpButtonPressed = 0;
 int goingDownButtonPressed = 0;
 
@@ -53,6 +55,10 @@ void setup() {
   pinMode(BUTTON_UP_PIN, INPUT);
   pinMode(BUTTON_DOWN_PIN, INPUT);
 
+  // For led buttons
+  pinMode(BUTTON_UP_LED_PIN, OUTPUT);
+  pinMode(BUTTON_DOWN_LED_PIN, OUTPUT);
+
   // For LED to simulate door opening/closing
   pinMode(DOOR_LED_PIN, OUTPUT);
 
@@ -76,6 +82,7 @@ void loop() {
   handleDoorAndResetFloorButtons();         // turn led on or off if openDoor = true
   // also reset lift buttons, because lift already arrived
   ledDisplayHandler(liftPosition);
+  handleButtonLed();
 }
 
 /*********************** I2C CODE ***********************/
@@ -202,6 +209,19 @@ void ledDisplayHandler(int x) {
   if (x >= 0 && x <= 9) {
     turnOff();
     displayDigit(x); 
+  }
+}
+
+void handleButtonLed(){
+  if (goingUpButtonPressed) {
+    digitalWrite(BUTTON_UP_LED_PIN, HIGH);
+  } else {
+    digitalWrite(BUTTON_UP_LED_PIN, LOW);
+  }
+  if (goingDownButtonPressed) {
+    digitalWrite(BUTTON_DOWN_LED_PIN, HIGH);
+  } else {
+    digitalWrite(BUTTON_DOWN_LED_PIN, LOW);
   }
 }
 
