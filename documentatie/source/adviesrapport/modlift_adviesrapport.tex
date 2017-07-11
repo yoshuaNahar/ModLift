@@ -1,0 +1,41 @@
+\documentclass[11pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[dutch]{babel} %vertaling naar nederlands voor latex zo als inhoudsopgave, hoofdstuk en de datum
+\usepackage{hyperref} %voor klikbare hyper link texten
+\usepackage{eurosym} %euro symbool
+\usepackage{graphicx} %images
+\usepackage{wrapfig} %figure naast de text
+\usepackage{titlepic} %image on title page
+\usepackage{subcaption} %subfigure figure in figure
+%checkmark & crossmark
+\usepackage{amssymb}
+\usepackage{pifont} %font waar check en crossmark in zitten
+\newcommand{\cmark}{\ding{51}} %define cmark as checkmark
+\newcommand{\xmark}{\ding{55}} %define xmark as crossmark
+%title gebeuren
+\usepackage{titlesec, blindtext, color}
+\definecolor{gray75}{gray}{0.75}
+\newcommand{\hsp}{\hspace{20pt}}
+\titleformat{\chapter}[hang]{\Huge\bfseries}{\thechapter\hsp\textcolor{gray75}{|}\hsp}{0pt}{\Huge\bfseries}
+
+\begin{document}
+\title{\Huge{ModLift} \\ \large{Adviesrapport}}
+\author{
+\textit{Created by}\\
+Dennis Houterman\\
+Yoshua Nahar\\
+Niek van Sabben\\
+Mitchell Scheidsbach\\
+Jerry Tran
+}
+\date{\today}
+\titlepic{\includegraphics[width=1\textwidth]{src/elevators}}
+\maketitle{}
+\tableofcontents{}
+\include{motor}
+\include{takel_mechanisme}
+\include{materiaal}
+\include{communicatie}
+\include{initialisatie}
+\include{detectie}
+\end{document}

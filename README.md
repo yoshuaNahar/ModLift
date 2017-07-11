@@ -1,1 +1,3 @@
-#### Arduino source code for TI project 5/6 to create a modular elevator
+## ModLift_alpha
+
+This repo contains the source code and documentation for creating a modular lift with Arduino.

@@ -1,0 +1,28 @@
+\chapter{Initialisatie liftsysteem}
+Omdat het liftsysteem modulair moet zijn, is het belangrijk dat er een manier wordt gevonden om te registreren welke verdieping waar zit en waar de lift zich bevindt.
+ 
+\section{Handmatig instellen}
+Het vooraf instellen van de liften als deze in een bepaalde configuratie zijn geplaatst is een goede manier om betrouwbaar de lift in te stellen. Omdat bij een modulair systeem de lift delen verwisseld moeten kunnen worden, is het instellen van de verdiepingen met de hand redelijk snel en eenvoudig te implementeren en wat langzamer om in te stellen als de lift delen zijn verplaatst. De lift delen doen hiermee niet automatisch registreren op welke verdieping ze zijn.
+
+\section{Vooraf geprogrammeerd}
+Het vooraf programmeren van een lift deel houdt in dat er in de code van dat specifieke lift deel al een verdieping is ingesteld. Dit houd in dat de lift delen in een vaste volgorde moeten worden geassembleerd maar betekent dat de lift minder tijd nodig heeft om ingesteld te worden.
+ 
+\section{Automatisch instellen}
+Met automatisch instellen wordt de lift bij opstarten op de begane grond gezet en zal er gekeken worden welk device de lift registreert. Vervolgens gaat de lift omhoog en blijft deze registreren op welke verdieping de lift wordt gezien. Als de lift boven is beëindigd deze routine en weet de lift waar welke verdieping is en kan de lift geregeld worden
+
+
+\section{Voor- en nadelen}
+\begin{center}
+\begin{tabular}{l|c|c|c}
+& Handmatig instellen & Vooraf geprogrammeren & Automatisch \\
+\hline
+Programmeerbaarheid & makkelijk & zeer makkelijk & zeer moeilijk \\
+\hline
+Insteltijd & redelijk snel & zeer snel & snel \\
+\hline
+Modulair & \cmark & \xmark & \cmark \\
+\end{tabular}
+\end{center}
+
+\section{Advies}
+Ons advies is om voor handmatig instellen te gaan omdat  dit makkelijk te programmeren is en voor voldoende flexibiliteit zorgt.

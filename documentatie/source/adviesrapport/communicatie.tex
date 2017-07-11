@@ -1,0 +1,26 @@
+\chapter{Communicatie}
+Omdat dit project moet worden gemaakt door eerstejaars kijken wij alleen naar communicatieprotocollen die al ingebouwd zijn in de Arduino Uno/Mega.
+ 
+\section{I\textsuperscript{2}C}
+I\textsuperscript{2}C is een communicatieprotocol ontworpen om meerdere apparaten te laten communiceren door middel van het Master-Slave systeem. Dit communicatiesysteem is maar half-duplex, waardoor communicatie altijd maar een kant op kan. Dit zorgt ervoor dat de master altijd maar met 1 persoon tegelijk kan praten. Een nadeel is dat de slaves alleen mogen communiceren als de master hierom vraagt, waardoor de master continue alle slaves moet afgaan om veranderingen binnen te krijgen. Dit protocol is al ingebouwd in de Arduino.
+ 
+\section{Serial}
+Serial communicatie is een manier om 2 apparaten te laten communiceren. Dit systeem is full-duplex, maar kan maar met 1 apparaat praten. Dit is te overkomen door een Master-Slave te implementeren, waar de master Arduino met alle slaves kan communiceren, en de slaves alleen met de master kunnen communiceren. Het nadeel hiervan is dat er kans is op een data botsing als meerdere slaves tegelijk gaan praten.
+
+\section{Voor- en nadelen}
+\begin{center}
+\begin{tabular}{l|c|c}
+& I\textsuperscript{2}C & Serial \\
+\hline
+Communicatie richting & Half-duplex & Full-duplex \\
+\hline
+Meer dan 2 apparaten mogelijk & \cmark & \xmark/\cmark  \\
+\hline
+Onderling door linken & \cmark & \xmark \\
+\hline
+Geen data botsingen bij meer dan 2 apparaten & \cmark & \xmark \\
+\end{tabular}
+\end{center}
+
+\section{Advies}
+Ons advies voor communicatie is I\textsuperscript{2}C. Dit omdat I\textsuperscript{2}C gebouwd is voor communicatie tussen meerder apparaten. Daarnaast hebben wij maar twee pins op de master Arduino nodig om daarop alle Arduino's aan te sluiten, in tegenstelling tot Serieel waar voor elke slave Arduino twee pins nodig zijn.
